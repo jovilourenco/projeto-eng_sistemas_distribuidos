@@ -9,11 +9,13 @@ services:
     environment:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: ${DB_NAME}
+      # O POSTGRES_DB é o banco padrão
+      POSTGRES_DB: ${DB_NAME} 
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
 
   # 2. Redis (Para as reservas temporárias e rate limiting)
   redis:
@@ -36,7 +38,7 @@ services:
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
     ports:
       - "5672:5672"   # Porta de comunicação dos microsserviços
-      - "15672:15672" # Porta do painel de administração web (Dashboard)
+      - "15672:15672" # Porta do painel de administração web
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq/
 
