@@ -1,4 +1,4 @@
-package br.engsistemasdistribuidos.servico;
+package br.engsistemasdistribuidos.eventoassento;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
