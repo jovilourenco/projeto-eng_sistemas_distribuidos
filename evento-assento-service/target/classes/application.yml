@@ -1,9 +1,9 @@
 spring:
   application:
-    name: servico-principal
+    name: evento-assento-service
 
   datasource:
-    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:ticketflow_db}
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:evento_assento_db}
     username: ${DB_USER:ticketflow}
     password: ${DB_PASSWORD:ticketflow}
     driver-class-name: org.postgresql.Driver
