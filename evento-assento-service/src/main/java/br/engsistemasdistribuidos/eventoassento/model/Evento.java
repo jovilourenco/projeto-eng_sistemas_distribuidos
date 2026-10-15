@@ -1,4 +1,4 @@
-package br.engsistemasdistribuidos.servico.model;
+package br.engsistemasdistribuidos.eventoassento.model;
 
 import java.time.LocalDateTime;
 import java.util.Objects;
@@ -17,7 +17,6 @@ public class Evento {
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "evento_sequence")
-    // Se você usou "serial4" na criação da tabela, o Postgres nomeia a sequence assim por padrão:
     @SequenceGenerator(name = "evento_sequence", sequenceName = "evento_assento.evento_id_evento_seq", allocationSize = 1)
     @Column(name = "id_evento")
     private int id;
@@ -37,7 +36,6 @@ public class Evento {
     @Column(name = "data_atualizacao")
     private LocalDateTime dataAtualizacao;
 
-    // Em microsserviços, guardamos apenas o ID do usuário (sem relacionamento físico @ManyToOne)
     @Column(name = "id_usuario_cadastro")
     private Integer idUsuarioCadastro;
 
@@ -73,9 +71,7 @@ public class Evento {
                 + ", dataCadastro=" + dataCadastro + ", dataAtualizacao=" + dataAtualizacao + ", idUsuarioCadastro="
                 + idUsuarioCadastro + ", idUsuarioAtualizacao=" + idUsuarioAtualizacao + "]";
     }
-
-    // --- Getters e Setters ---
-
+    
     public int getId() {
         return id;
     }
