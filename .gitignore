@@ -1,10 +1,19 @@
-echo "target/
+# Ignorar pastas de compilação do Maven
+**/target/
 !.mvn/wrapper/maven-wrapper.jar
-!**/src/main/**/target/
-!**/src/test/**/target/
 
+# Ignorar arquivos gerados por IDEs
 .vscode/
+.idea/
+*.iml
+*.iws
+*.ipr
+.settings/
+.classpath
+.project
 
-.DS_Store" > .gitignore
+# Ignorar arquivos do Mac (Herick)
+.DS_Store
 
+# Ignorar variáveis de ambiente originais
 .env
