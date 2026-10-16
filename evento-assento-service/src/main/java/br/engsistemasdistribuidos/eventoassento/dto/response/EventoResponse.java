@@ -2,6 +2,8 @@ package br.engsistemasdistribuidos.eventoassento.dto.response;
 
 import java.time.LocalDateTime;
 
+import br.engsistemasdistribuidos.eventoassento.model.TipoEvento;
+
 public class EventoResponse {
 
     private int id;
@@ -11,6 +13,8 @@ public class EventoResponse {
     private String descricao;
     
     private LocalDateTime dataEvento;
+
+    private TipoEvento tipoEvento;
     
     private LocalDateTime dataCadastro;
     
@@ -50,6 +54,14 @@ public class EventoResponse {
 
     public void setDataEvento(LocalDateTime dataEvento) {
         this.dataEvento = dataEvento;
+    }
+
+    public TipoEvento getTipoEvento() {
+        return tipoEvento;
+    }
+
+    public void setTipoEvento(TipoEvento tipoEvento) {
+        this.tipoEvento = tipoEvento;
     }
 
     public LocalDateTime getDataCadastro() {

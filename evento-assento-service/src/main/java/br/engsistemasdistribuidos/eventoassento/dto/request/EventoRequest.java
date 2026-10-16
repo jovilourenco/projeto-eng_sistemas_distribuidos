@@ -2,6 +2,8 @@ package br.engsistemasdistribuidos.eventoassento.dto.request;
 
 import java.time.LocalDateTime;
 
+import br.engsistemasdistribuidos.eventoassento.model.TipoEvento;
+
 public class EventoRequest {
 
     private String titulo;
@@ -9,6 +11,8 @@ public class EventoRequest {
     private String descricao;
     
     private LocalDateTime dataEvento;
+
+    private TipoEvento tipoEvento;
 
     public String getTitulo() {
         return titulo;
@@ -32,5 +36,13 @@ public class EventoRequest {
 
     public void setDataEvento(LocalDateTime dataEvento) {
         this.dataEvento = dataEvento;
+    }
+
+    public TipoEvento getTipoEvento() {
+        return tipoEvento;
+    }
+
+    public void setTipoEvento(TipoEvento tipoEvento) {
+        this.tipoEvento = tipoEvento;
     }
 }

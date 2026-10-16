@@ -5,9 +5,12 @@ import java.util.Objects;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 
@@ -29,6 +32,10 @@ public class Evento {
 
     @Column(name = "data_evento")
     private LocalDateTime dataEvento;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_tipo_evento", nullable = false)
+    private TipoEvento tipoEvento;
 
     @Column(name = "data_cadastro")
     private LocalDateTime dataCadastro;
@@ -102,6 +109,14 @@ public class Evento {
 
     public void setDataEvento(LocalDateTime dataEvento) {
         this.dataEvento = dataEvento;
+    }
+
+    public TipoEvento getTipoEvento() {
+        return tipoEvento;
+    }
+
+    public void setTipoEvento(TipoEvento tipoEvento) {
+        this.tipoEvento = tipoEvento;
     }
 
     public LocalDateTime getDataCadastro() {
