@@ -2,9 +2,12 @@
 
 ## Equipe (5 Integrantes)
 1. Herick de Lima Carneiro
-2. João Victor Lourenço da Silva
-3. Luana de Méro Omena
-4. Luerson de Albuquerque Silva Filho
+2. João Lucas Félix de Macena
+4. João Victor Lourenço da Silva
+5. Leandeson Pinheiro Santos de Araújo
+6. Luana de Méro Omena
+7. Luerson de Albuquerque Silva Filho
+
 
 ## Tema Escolhido
 
