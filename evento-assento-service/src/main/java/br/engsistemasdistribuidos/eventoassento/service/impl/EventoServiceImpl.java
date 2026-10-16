@@ -11,7 +11,9 @@ import br.engsistemasdistribuidos.eventoassento.dto.request.EventoRequest;
 import br.engsistemasdistribuidos.eventoassento.dto.response.EventoResponse;
 import br.engsistemasdistribuidos.eventoassento.mapper.EventoMapper;
 import br.engsistemasdistribuidos.eventoassento.model.Evento;
+import br.engsistemasdistribuidos.eventoassento.model.TipoEvento;
 import br.engsistemasdistribuidos.eventoassento.repository.EventoRepository;
+import br.engsistemasdistribuidos.eventoassento.repository.TipoEventoRepository;
 import br.engsistemasdistribuidos.eventoassento.service.EventoService;
 import jakarta.transaction.Transactional;
 
@@ -21,16 +23,22 @@ public class EventoServiceImpl implements EventoService {
 
     private final EventoRepository repository;
     private final EventoMapper mapper;
+    private final TipoEventoRepository tipoEventoRepository;
 
-    public EventoServiceImpl(EventoRepository repository, EventoMapper mapper) {
+    public EventoServiceImpl(EventoRepository repository, 
+                        EventoMapper mapper, 
+                        TipoEventoRepository tipoEventoRepository) {
         this.repository = repository;
         this.mapper = mapper;
+        this.tipoEventoRepository = tipoEventoRepository;   
     }
 
     @Override
     public EventoResponse criar(EventoRequest request) {
         Evento evento = mapper.toEntity(request);
     
+        carregarEntidadesRelacionadas(evento);
+
         // TODO: Por enquanto, fazemos o mock do id do usuário.
         // Futuramente será por token JWT (se conseguirmos implementar)
         evento.setIdUsuarioCadastro(1); 
@@ -58,6 +66,8 @@ public class EventoServiceImpl implements EventoService {
         
         mapper.updateEntity(request, evento);
         
+        carregarEntidadesRelacionadas(evento);
+        
         // TODO: Por enquanto, fazemos o mock do id do usuário.
         // Futuramente será por token JWT (se conseguirmos implementar)
         evento.setIdUsuarioAtualizacao(1);
@@ -75,5 +85,17 @@ public class EventoServiceImpl implements EventoService {
     private Evento recuperarEvento(int idEvento) {
         return repository.findOne(EventoRepository.byId(idEvento))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Evento não encontrado."));
+    }
+
+    private void carregarEntidadesRelacionadas(Evento evento) {
+        
+        if (evento.getTipoEvento() == null || evento.getTipoEvento().getId() <= 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "O Tipo de Evento é obrigatório.");
+        }
+
+        TipoEvento tipo = tipoEventoRepository.findById(evento.getTipoEvento().getId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "O Tipo de Evento informado é inválido ou não existe."));
+        
+        evento.setTipoEvento(tipo);
     }
 }
