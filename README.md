@@ -1,22 +1,21 @@
 # Projeto Final: Engenharia de Sistemas Distribuídos
 
-## Equipe
+## Equipe (5 Integrantes)
 1. Herick de Lima Carneiro
-2. João Victor Lourenço da Silva
-3. Luana de Méro Omena
-4. Luerson de Albuquerque Silva Filho
-5. João Lucas Félix de Macena
-6. Leandeson Pinheiro Santos de Araújo
+2. João Lucas Félix de Macena
+4. João Victor Lourenço da Silva
+5. Leandeson Pinheiro Santos de Araújo
+6. Luana de Méro Omena
+7. Luerson de Albuquerque Silva Filho
 
-## TicketFlow
+
+## Tema Escolhido
 
 ## Estrutura do Projeto (Microsserviços)
 Cada serviço contará com seu próprio schema de banco de dados, com migrações gerenciadas via **Flyway**, e mapeamento de objetos utilizando **MapStruct**. A orquestração do ambiente local será feita via **Docker Compose**.
 
 - `/api-gateway`: Ponto de entrada único para o sistema.
-- `/evento-assento-service`: Serviço que gerencia eventos no sistema.
-- `/reserva-service`: Serviço de reserva de assentos.
-- `/pagamento-service`: Serviço que irá gerenciar/simular os pagamentos dos ingressos.
+- `/servico-dominio-principal`: Microsserviço responsável pelo core business.
 
 ## Executando o Ambiente Local
 Para subir a infraestrutura de dependências (bancos de dados, message brokers, etc):

@@ -1,2 +1,0 @@
-ALTER TABLE evento_assento.evento ADD COLUMN id_tipo_evento int4 NOT NULL;
-ALTER TABLE evento_assento.evento ADD CONSTRAINT evento_tipo_evento_fk FOREIGN KEY (id_tipo_evento) REFERENCES evento_assento.tipo_evento (id_tipo_evento);
