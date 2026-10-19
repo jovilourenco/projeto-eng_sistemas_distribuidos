@@ -1,12 +1,12 @@
-package br.engsistemasdistribuidos.pagamento;
+package br.engsistemasdistribuidos.servico;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class PagamentoServiceApplication {
-    
+public class MainServiceApplication {
+
     public static void main(String[] args) {
-        SpringApplication.run(PagamentoServiceApplication.class, args);
+        SpringApplication.run(MainServiceApplication.class, args);
     }
 }
