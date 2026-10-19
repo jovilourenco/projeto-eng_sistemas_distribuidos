@@ -77,7 +77,8 @@
 						<path>
 							<groupId>org.hibernate.orm</groupId>
 							<artifactId>hibernate-jpamodelgen</artifactId>
-							<!-- No Spring Boot 3, o Hibernate é a versão 6. O parent do spring gerencia a versão automaticamente se deixarmos sem a tag version -->
+							<!-- Versão explícita: o maven-compiler-plugin 3.11.0 não resolve versões gerenciadas pelo Spring Boot neste bloco -->
+							<version>${hibernate.version}</version>
 						</path>
 					</annotationProcessorPaths>
 				</configuration>
