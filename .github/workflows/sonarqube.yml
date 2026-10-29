@@ -1,49 +1,68 @@
-name: SonarQube Analysis
+name: SonarQube Pipeline
 
 on:
   push:
-    branches:
-      - dev
+    branches: [ "main", "dev" ]
   pull_request:
-    branches:
-      - dev
-  workflow_dispatch:
+    types: [opened, synchronize, reopened]
 
 jobs:
-  ticketflow-backend:
-    name: TicketFlow Backend
+  sonar-evento-assento:
+    name: Análise SonarQube - Evento e Assento
     runs-on: ubuntu-latest
     
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
-          fetch-depth: 0
-
-      - name: Set up JDK 21
+          fetch-depth: 0 
+          
+      - name: Configurar JDK 17
         uses: actions/setup-java@v4
         with:
-          distribution: temurin
-          java-version: '21'
-          cache: maven
-
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+          
       - name: Cache SonarQube packages
         uses: actions/cache@v4
         with:
           path: ~/.sonar/cache
           key: ${{ runner.os }}-sonar
           restore-keys: ${{ runner.os }}-sonar
-
-      - name: Build and test
-        run: mvn -B clean verify
-
-      - name: Analyze with SonarQube
+          
+      - name: Build e SonarQube Scan
+        working-directory: ./evento-assento-service
         env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-        run: >
-          mvn -B sonar:sonar
-          -Dsonar.projectKey=ticketflow-backend
-          -Dsonar.host.url=$SONAR_HOST_URL
-          -Dsonar.token=$SONAR_TOKEN
-          -Dsonar.qualitygate.wait=true
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_EVENTO }} 
+          SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL }}
+        run: mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=evento-assento-service -Dsonar.projectName='TicketFlow - Evento Assento'
+
+  sonar-reserva:
+    name: Análise SonarQube - Reserva
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 
+          
+      - name: Configurar JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+          
+      - name: Cache SonarQube packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar
+          restore-keys: ${{ runner.os }}-sonar
+          
+      - name: Build e SonarQube Scan
+        working-directory: ./reserva-service
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_RESERVA }} 
+          SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL }}
+        run: mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=reserva-service -Dsonar.projectName='TicketFlow - Reserva'
