@@ -1,6 +1,5 @@
-version: '3.8'
-
 services:
+  # 1. PostgreSQL (uma instância, um banco lógico por serviço, criados no init.sql)
   postgres:
     image: postgres:15
     container_name: ticketflow_postgres
@@ -11,11 +10,17 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_NAME}
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-  # 2. Redis (Para as reservas temporárias e rate limiting)
+  # 2. Redis (reservas temporárias e rate limiting)
   redis:
     image: redis:7
     container_name: ticketflow_redis
@@ -24,8 +29,13 @@ services:
       - "6379:6379"
     volumes:
       - redis_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a ${REDIS_PASSWORD} ping | grep PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-  # 3. RabbitMQ (Broker de mensagens para o padrão SAGA e Outbox)
+  # 3. RabbitMQ (broker para SAGA e Outbox)
   rabbitmq:
     image: rabbitmq:3-management
     container_name: ticketflow_rabbitmq
@@ -35,12 +45,31 @@ services:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
     ports:
-      - "5672:5672"   # Porta de comunicação dos microsserviços
-      - "15672:15672" # Porta do painel de administração web (Dashboard)
+      - "5672:5672"    # comunicação dos microsserviços
+      - "15672:15672"  # painel web de administração
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq/
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+
+  # 4. Keycloak (autenticação: OAuth 2.0 / JWT)
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0
+    container_name: ticketflow_keycloak
+    command: start-dev
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+    ports:
+      - "8081:8080"   # 8081 no seu computador, para não colidir com os serviços Spring (8080)
+    volumes:
+      - keycloak_data:/opt/keycloak/data
 
 volumes:
   postgres_data:
   redis_data:
   rabbitmq_data:
+  keycloak_data:
