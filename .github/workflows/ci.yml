@@ -1,39 +1,36 @@
-name: CI & DevSecOps Pipeline
-
-on:
-  push:
-    branches: [ "main", "dev" ]
-  pull_request:
-    branches: [ "main", "dev" ]
-    types: [opened, synchronize, reopened]
-
 jobs:
   build-and-analyze:
     name: Build & Sonar (${{ matrix.service.name }})
     runs-on: ubuntu-latest
     
+    permissions:
+      contents: write
+      
     strategy:
-      fail-fast: false # Se um serviço falhar, os outros continuam rodando
+      fail-fast: false
       matrix:
         service:
+          
           - name: 'TicketFlow - Evento Assento'
             path: 'evento-assento-service'
-            projectKey: 'evento-assento-service'
+            projectKey: 'jovilourenco_evento-assento-service'
             tokenSecret: 'SONAR_TOKEN_EVENTO'
+          
           - name: 'TicketFlow - Reserva'
             path: 'reserva-service'
-            projectKey: 'reserva-service'
+            projectKey: 'jovilourenco_reserva-service'
             tokenSecret: 'SONAR_TOKEN_RESERVA'
+          
           - name: 'TicketFlow - Pagamento'
             path: 'pagamento-service'
-            projectKey: 'pagamento-service'
+            projectKey: 'jovilourenco_pagamento-service'
             tokenSecret: 'SONAR_TOKEN_PAGAMENTO'
 
     steps:
       - name: Checkout do código
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 
+          fetch-depth: 0
 
       - name: Configurar JDK 17
         uses: actions/setup-java@v4
@@ -64,4 +61,5 @@ jobs:
         if: github.event_name == 'push'
         uses: advanced-security/maven-dependency-submission-action@v4
         with:
-          working-directory: ./${{ matrix.service.path }}
+          directory: ./${{ matrix.service.path }}
+          correlator: ${{ matrix.service.path }}
