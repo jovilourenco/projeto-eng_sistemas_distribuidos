@@ -1,0 +1,67 @@
+name: CI & DevSecOps Pipeline
+
+on:
+  push:
+    branches: [ "main", "dev" ]
+  pull_request:
+    branches: [ "main", "dev" ]
+    types: [opened, synchronize, reopened]
+
+jobs:
+  build-and-analyze:
+    name: Build & Sonar (${{ matrix.service.name }})
+    runs-on: ubuntu-latest
+    
+    strategy:
+      fail-fast: false # Se um serviço falhar, os outros continuam rodando
+      matrix:
+        service:
+          - name: 'TicketFlow - Evento Assento'
+            path: 'evento-assento-service'
+            projectKey: 'evento-assento-service'
+            tokenSecret: 'SONAR_TOKEN_EVENTO'
+          - name: 'TicketFlow - Reserva'
+            path: 'reserva-service'
+            projectKey: 'reserva-service'
+            tokenSecret: 'SONAR_TOKEN_RESERVA'
+          - name: 'TicketFlow - Pagamento'
+            path: 'pagamento-service'
+            projectKey: 'pagamento-service'
+            tokenSecret: 'SONAR_TOKEN_PAGAMENTO'
+
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 
+
+      - name: Configurar JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Cache do SonarQube
+        uses: actions/cache@v4
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar
+          restore-keys: ${{ runner.os }}-sonar
+
+      - name: Build, Testes e SonarQube Scan
+        working-directory: ./${{ matrix.service.path }}
+        env:
+          SONAR_TOKEN: ${{ secrets[matrix.service.tokenSecret] }}
+          SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL }}
+        run: >
+          mvn -B clean verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar
+          -Dsonar.organization=jovilourenco
+          -Dsonar.projectKey=${{ matrix.service.projectKey }}
+          -Dsonar.projectName="${{ matrix.service.name }}"
+
+      - name: Atualizar Grafo de Dependências (SCA / Dependabot)
+        if: github.event_name == 'push'
+        uses: advanced-security/maven-dependency-submission-action@v4
+        with:
+          working-directory: ./${{ matrix.service.path }}
