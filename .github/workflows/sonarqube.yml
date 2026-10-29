@@ -35,7 +35,7 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_EVENTO }} 
           SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL }}
-        run: mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=evento-assento-service -Dsonar.projectName='TicketFlow - Evento Assento'
+        run: mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=evento-assento-service -Dsonar.projectName='TicketFlow - Evento Assento' -Dsonar.organization=jovilourenco
 
   sonar-reserva:
     name: Análise SonarQube - Reserva
@@ -65,4 +65,4 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_RESERVA }} 
           SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL }}
-        run: mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=reserva-service -Dsonar.projectName='TicketFlow - Reserva'
+        run: mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=reserva-service -Dsonar.projectName='TicketFlow - Reserva' -Dsonar.organization=jovilourenco
