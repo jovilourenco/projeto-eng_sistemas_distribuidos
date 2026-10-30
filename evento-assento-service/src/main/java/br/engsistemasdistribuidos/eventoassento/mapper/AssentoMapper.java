@@ -12,10 +12,10 @@ import br.engsistemasdistribuidos.eventoassento.dto.request.AssentoRequest;
 import br.engsistemasdistribuidos.eventoassento.dto.response.AssentoResponse;
 import br.engsistemasdistribuidos.eventoassento.model.Assento;
 
-@Mapper(componentModel = "spring")
+// O EventoMapper converte o Evento do assento no EventoResponse completo.
+@Mapper(componentModel = "spring", uses = EventoMapper.class)
 public interface AssentoMapper {
 
-    @Mapping(source = "evento.id", target = "idEvento")
     AssentoResponse toResponse(Assento assento);
 
     List<AssentoResponse> toResponse(List<Assento> assentos);

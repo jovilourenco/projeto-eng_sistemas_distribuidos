@@ -52,7 +52,7 @@ class AssentoIntegrationTest {
                 .content("{\"quantidade\":3,\"tipoAssento\":\"VIP\",\"valor\":250.00}"))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.length()").value(3))
-                .andExpect(jsonPath("$[0].idEvento").value(idEvento))
+                .andExpect(jsonPath("$[0].evento.id").value(idEvento))
                 .andExpect(jsonPath("$[0].tipoAssento").value("VIP"))
                 .andExpect(jsonPath("$[0].status").value("DISPONIVEL"))
                 .andExpect(jsonPath("$[0].ativo").value(true));

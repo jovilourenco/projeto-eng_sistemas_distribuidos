@@ -8,7 +8,7 @@ public class AssentoResponse {
 
     private int id;
 
-    private int idEvento;
+    private EventoResponse evento;
 
     private String tipoAssento;
 
@@ -26,12 +26,12 @@ public class AssentoResponse {
         this.id = id;
     }
 
-    public int getIdEvento() {
-        return idEvento;
+    public EventoResponse getEvento() {
+        return evento;
     }
 
-    public void setIdEvento(int idEvento) {
-        this.idEvento = idEvento;
+    public void setEvento(EventoResponse evento) {
+        this.evento = evento;
     }
 
     public String getTipoAssento() {

@@ -4,6 +4,8 @@ import java.util.Objects;
 
 import org.hibernate.annotations.Immutable;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -12,6 +14,7 @@ import jakarta.persistence.Table;
 @Entity
 @Table(schema = "evento_assento", name = "tipo_evento")
 @Immutable
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class TipoEvento {
 
     public static final int PALESTRA = 1;
