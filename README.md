@@ -18,6 +18,21 @@ Cada serviço contará com seu próprio schema de banco de dados, com migraçõe
 - `/reserva-service`: Serviço de reserva de assentos.
 - `/pagamento-service`: Serviço que irá gerenciar/simular os pagamentos dos ingressos.
 
+## Arquitetura
+
+Os diagramas mostram a arquitetura proposta do TicketFlow em dois níveis. O nível 1 apresenta as pessoas e o provedor de identidade que se relacionam com o sistema. O nível 2 detalha os serviços e a infraestrutura. Os quatro bancos lógicos mostrados no nível 2 compartilham uma instância PostgreSQL, conforme `docker-compose.yml` e `init.sql`. O Serviço de Notificações está previsto na proposta do projeto, mas ainda não está implementado neste repositório.
+
+### Nível 1 — Contexto
+
+![Diagrama de contexto do TicketFlow](docs/arquitetura/c4-nivel1.png)
+
+[Fonte editável no draw.io](docs/arquitetura/c4-nivel1.drawio)
+### Nível 2 — Containers
+
+![Diagrama de containers do TicketFlow](docs/arquitetura/c4-nivel2.png)
+
+[Fonte editável no draw.io](docs/arquitetura/c4-nivel2.drawio)
+
 ## Executando o Ambiente Local
 Para subir a infraestrutura de dependências (bancos de dados, message brokers, etc):
 \`\`\`bash
