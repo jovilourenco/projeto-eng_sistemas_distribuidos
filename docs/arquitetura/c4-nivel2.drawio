@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mxfile host="app.diagrams.net" modified="2026-10-30T00:00:00.000Z" agent="TicketFlow" version="24.7.17" type="device">
+  <diagram name="TicketFlow | Nível 2 · Containers" id="c4-nivel2">
+    <mxGraphModel dx="1600" dy="1000" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1690" pageHeight="1230" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="user" value="Usuário Comum" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E9F2FF;strokeColor=#2459A6;strokeWidth=2;fontColor=#172B4D;fontSize=17;fontStyle=1;align=center;verticalAlign=middle;arcSize=14;" vertex="1" parent="1">
+          <mxGeometry x="60" y="195" width="220" height="75" as="geometry"/>
+        </mxCell>
+        <mxCell id="manager" value="Gestor de Eventos" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E9F2FF;strokeColor=#2459A6;strokeWidth=2;fontColor=#172B4D;fontSize=17;fontStyle=1;align=center;verticalAlign=middle;arcSize=14;" vertex="1" parent="1">
+          <mxGeometry x="60" y="325" width="220" height="75" as="geometry"/>
+        </mxCell>
+        <mxCell id="gateway" value="API Gateway&lt;br&gt;Entrada única e roteamento" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E9F8F0;strokeColor=#198754;strokeWidth=2;fontColor=#172B4D;fontSize=17;fontStyle=1;align=center;verticalAlign=middle;arcSize=14;" vertex="1" parent="1">
+          <mxGeometry x="490" y="230" width="260" height="100" as="geometry"/>
+        </mxCell>
+        <mxCell id="keycloak" value="Keycloak&lt;br&gt;OAuth 2.0 / JWT" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF3DF;strokeColor=#BA7425;strokeWidth=2;fontColor=#172B4D;fontSize=17;fontStyle=1;align=center;verticalAlign=middle;arcSize=14;" vertex="1" parent="1">
+          <mxGeometry x="970" y="140" width="260" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="redis" value="Redis&lt;br&gt;Rate limiting e reservas" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF3DF;strokeColor=#BA7425;strokeWidth=2;fontColor=#172B4D;fontSize=17;fontStyle=1;align=center;verticalAlign=middle;arcSize=14;" vertex="1" parent="1">
+          <mxGeometry x="1330" y="260" width="250" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="events" value="Eventos e Assentos&lt;br&gt;Catálogo e disponibilidade" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E9F8F0;strokeColor=#198754;strokeWidth=2;fontColor=#172B4D;fontSize=17;fontStyle=1;align=center;verticalAlign=middle;arcSize=14;" vertex="1" parent="1">
+          <mxGeometry x="80" y="580" width="300" height="100" as="geometry"/>
+        </mxCell>
+        <mxCell id="reservas" value="Serviço de Reservas&lt;br&gt;Reserva temporária e compensação" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E9F8F0;strokeColor=#198754;strokeWidth=2;fontColor=#172B4D;fontSize=17;fontStyle=1;align=center;verticalAlign=middle;arcSize=14;" vertex="1" parent="1">
+          <mxGeometry x="490" y="580" width="300" height="100" as="geometry"/>
+        </mxCell>
+        <mxCell id="payments" value="Serviço de Pagamentos&lt;br&gt;Pagamento simulado" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E9F8F0;strokeColor=#198754;strokeWidth=2;fontColor=#172B4D;fontSize=17;fontStyle=1;align=center;verticalAlign=middle;arcSize=14;" vertex="1" parent="1">
+          <mxGeometry x="900" y="580" width="300" height="100" as="geometry"/>
+        </mxCell>
+        <mxCell id="notifications" value="Serviço de Notificações&lt;br&gt;Planejado" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3F3F3;strokeColor=#777777;strokeWidth=2;fontColor=#172B4D;fontSize=17;fontStyle=1;align=center;verticalAlign=middle;arcSize=14;" vertex="1" parent="1">
+          <mxGeometry x="1310" y="580" width="300" height="100" as="geometry"/>
+        </mxCell>
+        <mxCell id="db_events" value="PostgreSQL · Eventos&lt;br&gt;Banco lógico evento_assento_db" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF3DF;strokeColor=#BA7425;strokeWidth=2;fontColor=#172B4D;fontSize=17;fontStyle=1;align=center;verticalAlign=middle;arcSize=14;" vertex="1" parent="1">
+          <mxGeometry x="80" y="850" width="300" height="82" as="geometry"/>
+        </mxCell>
+        <mxCell id="db_reservas" value="PostgreSQL · Reservas&lt;br&gt;Banco lógico reserva_db" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF3DF;strokeColor=#BA7425;strokeWidth=2;fontColor=#172B4D;fontSize=17;fontStyle=1;align=center;verticalAlign=middle;arcSize=14;" vertex="1" parent="1">
+          <mxGeometry x="490" y="850" width="300" height="82" as="geometry"/>
+        </mxCell>
+        <mxCell id="db_payments" value="PostgreSQL · Pagamentos&lt;br&gt;Banco lógico pagamento_db" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF3DF;strokeColor=#BA7425;strokeWidth=2;fontColor=#172B4D;fontSize=17;fontStyle=1;align=center;verticalAlign=middle;arcSize=14;" vertex="1" parent="1">
+          <mxGeometry x="900" y="850" width="300" height="82" as="geometry"/>
+        </mxCell>
+        <mxCell id="db_notifications" value="PostgreSQL · Notificações&lt;br&gt;Banco lógico notificacao_db" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3F3F3;strokeColor=#777777;strokeWidth=2;fontColor=#172B4D;fontSize=17;fontStyle=1;align=center;verticalAlign=middle;arcSize=14;" vertex="1" parent="1">
+          <mxGeometry x="1310" y="850" width="300" height="82" as="geometry"/>
+        </mxCell>
+        <mxCell id="rabbit" value="RabbitMQ&lt;br&gt;Mensageria para SAGA e Outbox" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF3DF;strokeColor=#BA7425;strokeWidth=2;fontColor=#172B4D;fontSize=17;fontStyle=1;align=center;verticalAlign=middle;arcSize=14;" vertex="1" parent="1">
+          <mxGeometry x="655" y="1080" width="380" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="e0" value="consulta, reserva e paga" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#61758B;strokeWidth=2;fontColor=#34465D;fontSize=13;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="user" target="gateway">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="280" y="232" as="sourcePoint"/>
+            <mxPoint x="490" y="260" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e1" value="cadastra eventos" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#61758B;strokeWidth=2;fontColor=#34465D;fontSize=13;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="manager" target="gateway">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="280" y="362" as="sourcePoint"/>
+            <mxPoint x="490" y="300" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e2" value="valida token JWT" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#61758B;strokeWidth=2;fontColor=#34465D;fontSize=13;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="gateway" target="keycloak">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="750" y="260" as="sourcePoint"/>
+            <mxPoint x="970" y="185" as="targetPoint"/>
+            <Array as="points">
+              <mxPoint x="860" y="260"/>
+              <mxPoint x="860" y="185"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e3" value="aplica limite de requisições" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#61758B;strokeWidth=2;fontColor=#34465D;fontSize=13;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="gateway" target="redis">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="750" y="300" as="sourcePoint"/>
+            <mxPoint x="1330" y="300" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e4" value="consulta e cadastra eventos" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#61758B;strokeWidth=2;fontColor=#34465D;fontSize=13;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="gateway" target="events">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="545" y="330" as="sourcePoint"/>
+            <mxPoint x="230" y="580" as="targetPoint"/>
+            <Array as="points">
+              <mxPoint x="545" y="455"/>
+              <mxPoint x="230" y="455"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e5" value="solicita reserva de assento" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#61758B;strokeWidth=2;fontColor=#34465D;fontSize=13;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="gateway" target="reservas">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="620" y="330" as="sourcePoint"/>
+            <mxPoint x="620" y="580" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e6" value="mantém bloqueio temporário" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#61758B;strokeWidth=2;fontColor=#34465D;fontSize=13;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="reservas" target="redis">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="790" y="610" as="sourcePoint"/>
+            <mxPoint x="1370" y="350" as="targetPoint"/>
+            <Array as="points">
+              <mxPoint x="825" y="610"/>
+              <mxPoint x="825" y="390"/>
+              <mxPoint x="1370" y="390"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e7" value="persiste eventos e assentos" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#61758B;strokeWidth=2;fontColor=#34465D;fontSize=13;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="events" target="db_events">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="230" y="680" as="sourcePoint"/>
+            <mxPoint x="230" y="850" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e8" value="persiste reservas" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#61758B;strokeWidth=2;fontColor=#34465D;fontSize=13;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="reservas" target="db_reservas">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="640" y="680" as="sourcePoint"/>
+            <mxPoint x="640" y="850" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e9" value="persiste pagamentos" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#61758B;strokeWidth=2;fontColor=#34465D;fontSize=13;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="payments" target="db_payments">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1050" y="680" as="sourcePoint"/>
+            <mxPoint x="1050" y="850" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e10" value="registra notificações" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#61758B;strokeWidth=2;fontColor=#34465D;fontSize=13;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="notifications" target="db_notifications">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1460" y="680" as="sourcePoint"/>
+            <mxPoint x="1460" y="850" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e11" value="publica mudanças da reserva" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#61758B;strokeWidth=2;fontColor=#34465D;fontSize=13;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="reservas" target="rabbit">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="490" y="650" as="sourcePoint"/>
+            <mxPoint x="730" y="1080" as="targetPoint"/>
+            <Array as="points">
+              <mxPoint x="450" y="650"/>
+              <mxPoint x="450" y="1030"/>
+              <mxPoint x="730" y="1030"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e12" value="publica resultado do pagamento" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#61758B;strokeWidth=2;fontColor=#34465D;fontSize=13;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="payments" target="rabbit">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1200" y="650" as="sourcePoint"/>
+            <mxPoint x="970" y="1080" as="targetPoint"/>
+            <Array as="points">
+              <mxPoint x="1230" y="650"/>
+              <mxPoint x="1230" y="1030"/>
+              <mxPoint x="970" y="1030"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e13" value="entrega resultado do pagamento" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#61758B;strokeWidth=2;fontColor=#34465D;fontSize=13;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="rabbit" target="reservas">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="850" y="1080" as="sourcePoint"/>
+            <mxPoint x="730" y="680" as="targetPoint"/>
+            <Array as="points">
+              <mxPoint x="850" y="750"/>
+              <mxPoint x="730" y="750"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e14" value="entrega pagamento aprovado para notificar" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#61758B;strokeWidth=2;fontColor=#34465D;fontSize=13;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="rabbit" target="notifications">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1035" y="1125" as="sourcePoint"/>
+            <mxPoint x="1310" y="650" as="targetPoint"/>
+            <Array as="points">
+              <mxPoint x="1250" y="1125"/>
+              <mxPoint x="1250" y="650"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e15" value="envia confirmação e ingresso" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#61758B;strokeWidth=2;fontColor=#34465D;fontSize=13;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="notifications" target="user">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1610" y="620" as="sourcePoint"/>
+            <mxPoint x="170" y="195" as="targetPoint"/>
+            <Array as="points">
+              <mxPoint x="1650" y="620"/>
+              <mxPoint x="1650" y="125"/>
+              <mxPoint x="170" y="125"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
