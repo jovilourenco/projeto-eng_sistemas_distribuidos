@@ -31,7 +31,7 @@ As duas ferramentas resolvem o mesmo problema geral (desacoplar produtores e con
 | **Roteamento** | Flexível no broker: exchanges `direct`, `topic`, `fanout` e `headers` | Por tópico e partição; filtragem fina fica no consumidor |
 | **Releitura do histórico** | Não é o caso de uso principal | Nativa: basta voltar o offset |
 | **Ordenação** | Garantida por fila, com um único consumidor | Garantida por partição |
-| **Garantia de entrega** | Pelo menos uma vez, com *publisher confirms* e *ack* manual | Pelo menos uma vez por padrão; "exatamente uma vez" apenas entre tópicos Kafka, por meio de transações |
+| **Garantia de entrega** | Pelo menos uma vez, com *publisher confirms* e *ack* enviado só após o processamento | Pelo menos uma vez por padrão; "exatamente uma vez" apenas entre tópicos Kafka, por meio de transações |
 | **Mensagens com falha** | *Dead letter exchange*: o broker encaminha a mensagem rejeitada para outra fila; o número de tentativas é limitado no consumidor | Tópicos de retry e de mensagens mortas mantidos pela aplicação ou por biblioteca cliente (por exemplo, Spring for Apache Kafka) |
 | **Vazão** | Menor vazão máxima | Vazão muito superior em grandes volumes; a vantagem aparece em cargas muito acima da prevista |
 | **Operação local** | Um container, com painel web de administração | Broker com KRaft (ou ZooKeeper em versões anteriores); mais memória e configuração |
@@ -66,7 +66,7 @@ O critério de nenhum evento perdido só é atendido com as seguintes configura�
 | Exchanges e filas **duráveis** | Sobrevivem à reinicialização do broker |
 | Mensagens **persistentes** (`delivery_mode = 2`) | São gravadas em disco e não se perdem se o broker reiniciar com elas na fila |
 | ***Publisher confirms*** no publicador do Outbox | O Outbox só marca uma mensagem como enviada depois que o broker confirma o recebimento; sem confirmação, ela é reenviada |
-| ***Ack* manual** nos consumidores | A mensagem só é confirmada depois que a transação local do consumidor é concluída |
+| ***Ack* após o processamento** nos consumidores (não na entrega) | A mensagem só é confirmada depois que a transação local do consumidor é concluída. No Spring AMQP, isso corresponde ao modo de confirmação `AUTO`, em que o container confirma a mensagem quando o listener termina sem erro |
 | **Dead letter exchange** em toda fila de consumo, e número de tentativas limitado no consumidor (retry do Spring AMQP, que rejeita a mensagem sem devolvê-la à fila ao fim das tentativas) | Mensagens que falham repetidamente são isoladas em uma fila de mensagens mortas, monitorada pela equipe, em vez de serem reprocessadas sem fim |
 
 ## Alternativas consideradas

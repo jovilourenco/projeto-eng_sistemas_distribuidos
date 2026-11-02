@@ -174,7 +174,7 @@ A rotina só resolve tentativas criadas há mais tempo que o prazo da chamada so
 
 | Participante | Forma | Motivo |
 | :--- | :--- | :--- |
-| **Eventos e Assentos** | Comandos e respostas assíncronos pelo RabbitMQ, publicados pelo Transactional Outbox | Não há usuário esperando a resposta. A fila absorve indisponibilidades temporárias. |
+| **Eventos e Assentos** | Comandos e respostas assíncronos pelo RabbitMQ. Os comandos são publicados pelo Transactional Outbox; as respostas são publicadas logo depois que a transação do comando é confirmada | Não há usuário esperando a resposta. A fila absorve indisponibilidades temporárias. As respostas dispensam o Outbox: se uma delas se perder, o orquestrador reenvia o comando pendente (item 7) e, como os comandos são idempotentes (ADR-003), a mesma resposta é gerada de novo. |
 | **Pagamentos** | Chamada HTTP síncrona com Circuit Breaker e chave de idempotência | O usuário espera o resultado do pagamento. O critério de erro controlado em menos de 1 segundo só se aplica a uma chamada síncrona. Esta é a exceção, prevista no ADR-001, ao uso de mensagens entre serviços. |
 | **Notificações** | Evento assíncrono pelo RabbitMQ (`compra.concluida`), publicado pelo Transactional Outbox | Notificar é consequência da compra, não um passo dela. Uma falha no envio não deve desfazer a compra. |
 
