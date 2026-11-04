@@ -92,21 +92,6 @@ O [índice de ADRs](docs/adr/README.md) traz também o modelo e os próximos ADR
 | [Contrato de mensagens](docs/mensageria.md) | Topologia no RabbitMQ e mensagens da SAGA |
 | [Slides da apresentação](docs/slides/) | Apresentação da Entrega 2, em preparação na issue [#19](https://github.com/jovilourenco/projeto-eng_sistemas_distribuidos/issues/19) |
 
-## Arquitetura
-
-Os diagramas mostram a arquitetura proposta do TicketFlow em dois níveis. O nível 1 apresenta as pessoas e o provedor de identidade que se relacionam com o sistema. O nível 2 detalha os serviços e a infraestrutura. Os quatro bancos lógicos mostrados no nível 2 compartilham uma instância PostgreSQL, conforme `docker-compose.yml` e `init.sql`. O Serviço de Notificações está previsto na proposta do projeto, mas ainda não está implementado neste repositório.
-
-### Nível 1 — Contexto
-
-![Diagrama de contexto do TicketFlow](docs/arquitetura/c4-nivel1.png)
-
-[Fonte editável no draw.io](docs/arquitetura/c4-nivel1.drawio)
-### Nível 2 — Containers
-
-![Diagrama de containers do TicketFlow](docs/arquitetura/c4-nivel2.png)
-
-[Fonte editável no draw.io](docs/arquitetura/c4-nivel2.drawio)
-
 ## Executando o Ambiente Local
 
 **Pré-requisitos:** Docker com Docker Compose, JDK 17 e Maven.
