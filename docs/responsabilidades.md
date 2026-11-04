@@ -9,7 +9,7 @@ A divisão de tarefas foi mapeada diretamente a partir das issues criadas no rep
 | **Leandeson Pinheiro** | Diagramas e Documentação Base | #18, #19 |
 | **João Lucas Macena** | Diagramas C4 e Modelagem (Entidades) | #16 |
 | **Herick de Lima** | Modelagem de Ingressos | #28 |
-| **Luana Omena** | *(A definir / Apoio)* | Nenhuma issue atribuída no momento |
+| **Luana Omena** |Documentação de ADRs, Planejamento e Documentação Base| #29, #17|
 | **Equipe (Não atribuído)** | Gerenciamento de Ingressos | #12 (*Pendente de atribuição*) |
 
 *Nota: O serviço de Notificações (envio assíncrono) será desenvolvido conforme as issues forem desmembradas pela equipe.*
