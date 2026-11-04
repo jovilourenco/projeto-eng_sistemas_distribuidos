@@ -1,6 +1,7 @@
 package br.engsistemasdistribuidos.eventoassento.model;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -35,12 +36,18 @@ public class Assento {
     @Column(name = "valor")
     private BigDecimal valor;
 
+    // status e idCompra só mudam pelas escritas condicionais da SAGA (AssentoRepository).
+    // updatable = false impede que um save() do JPA desfaça uma reserva feita em paralelo (ADR-003).
+    // Impedir que o gestor altere ou exclua um assento recém-reservado é a issue #39 (ADR-003, item 6).
     @Enumerated(EnumType.STRING)
-    @Column(name = "status")
+    @Column(name = "status", updatable = false)
     private StatusAssento status;
 
     @Column(name = "ativo")
     private boolean ativo;
+
+    @Column(name = "id_compra", insertable = false, updatable = false)
+    private UUID idCompra;
 
     public int getId() {
         return id;
@@ -88,5 +95,9 @@ public class Assento {
 
     public void setAtivo(boolean ativo) {
         this.ativo = ativo;
+    }
+
+    public UUID getIdCompra() {
+        return idCompra;
     }
 }
