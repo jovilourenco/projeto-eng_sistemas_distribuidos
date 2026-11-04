@@ -9,7 +9,7 @@ A stack foi definida visando a construção de uma arquitetura de microsserviço
 | **Resilience4j** | Biblioteca utilizada para implementar o padrão Circuit Breaker, permitindo isolar falhas e evitar a propagação de erros em cascata. |
 | **PostgreSQL** | Banco relacional escolhido para garantir propriedades ACID nas transações de cada serviço, fundamental para a consistência e para o padrão Transactional Outbox. |
 | **Redis** | Banco em memória escolhido para alta performance, sendo utilizado para gerenciar a reserva temporária dos assentos (com TTL) e o rate limiting. |
-| **RabbitMQ / Kafka** | Broker de mensagens utilizado para a comunicação assíncrona entre os serviços, viabilizando o Transactional Outbox e a SAGA. |
+| **RabbitMQ** | Broker de mensagens utilizado para a comunicação assíncrona entre os serviços, viabilizando o Transactional Outbox. |
 | **Keycloak** | Solução de gerenciamento de identidade utilizada para autenticação baseada em OAuth 2.0 e JWT, garantindo a segurança do sistema. |
 | **Docker Compose** | Ferramenta para orquestração do ambiente local, permitindo subir toda a infraestrutura e os microsserviços de forma padronizada e isolada. |
 | **GitHub Actions** | Plataforma de CI/CD escolhida para automatizar a integração contínua, rodando testes e garantindo a qualidade do código a cada Pull Request. |
