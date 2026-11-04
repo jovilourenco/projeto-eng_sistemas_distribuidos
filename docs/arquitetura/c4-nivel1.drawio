@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mxfile host="app.diagrams.net" modified="2026-10-30T00:00:00.000Z" agent="TicketFlow" version="24.7.17" type="device">
+  <diagram name="TicketFlow | Nível 1 · Contexto" id="c4-nivel1">
+    <mxGraphModel dx="1600" dy="1000" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1560" pageHeight="720" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="user" value="Usuário Comum" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E9F2FF;strokeColor=#2459A6;strokeWidth=2;fontColor=#172B4D;fontSize=17;fontStyle=1;align=center;verticalAlign=middle;arcSize=14;" vertex="1" parent="1">
+          <mxGeometry x="75" y="230" width="280" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="manager" value="Gestor de Eventos" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E9F2FF;strokeColor=#2459A6;strokeWidth=2;fontColor=#172B4D;fontSize=17;fontStyle=1;align=center;verticalAlign=middle;arcSize=14;" vertex="1" parent="1">
+          <mxGeometry x="75" y="490" width="280" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="ticketflow" value="TicketFlow&lt;br&gt;Plataforma de venda de ingressos" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EDEBFF;strokeColor=#6554B5;strokeWidth=2;fontColor=#172B4D;fontSize=17;fontStyle=1;align=center;verticalAlign=middle;arcSize=14;" vertex="1" parent="1">
+          <mxGeometry x="610" y="335" width="340" height="135" as="geometry"/>
+        </mxCell>
+        <mxCell id="keycloak" value="Keycloak&lt;br&gt;Autenticação e identidade" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF3DF;strokeColor=#BA7425;strokeWidth=2;fontColor=#172B4D;fontSize=17;fontStyle=1;align=center;verticalAlign=middle;arcSize=14;" vertex="1" parent="1">
+          <mxGeometry x="1210" y="350" width="270" height="105" as="geometry"/>
+        </mxCell>
+        <mxCell id="e0" value="consulta eventos, reserva&lt;br&gt;assentos e paga ingressos" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#61758B;strokeWidth=2;fontColor=#34465D;fontSize=13;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="user" target="ticketflow">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="355" y="275" as="sourcePoint"/>
+            <mxPoint x="610" y="365" as="targetPoint"/>
+            <Array as="points">
+              <mxPoint x="465" y="275"/>
+              <mxPoint x="465" y="365"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e1" value="cadastra eventos e&lt;br&gt;gerencia assentos" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#61758B;strokeWidth=2;fontColor=#34465D;fontSize=13;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="manager" target="ticketflow">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="355" y="535" as="sourcePoint"/>
+            <mxPoint x="610" y="440" as="targetPoint"/>
+            <Array as="points">
+              <mxPoint x="465" y="535"/>
+              <mxPoint x="465" y="440"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e2" value="autentica usuários e&lt;br&gt;valida tokens" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#61758B;strokeWidth=2;fontColor=#34465D;fontSize=13;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="ticketflow" target="keycloak">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="950" y="402" as="sourcePoint"/>
+            <mxPoint x="1210" y="402" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
