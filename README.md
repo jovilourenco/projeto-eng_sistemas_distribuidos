@@ -26,9 +26,13 @@ docker-compose up -d
 
 ---
 
+## Apresentação (Entrega 2)
+- [Slides da Apresentação (PDF)](./docs/slides/TicketFlow.pdf)
+
 ## Declaração Obrigatória: Ferramentas de IA utilizadas
 
 * **Ferramentas utilizadas:**
 * **Em quais partes do trabalho a IA atuou:**
 * **Como a IA foi orientada:**
 * **Avaliação do uso da IA:**
+* 
