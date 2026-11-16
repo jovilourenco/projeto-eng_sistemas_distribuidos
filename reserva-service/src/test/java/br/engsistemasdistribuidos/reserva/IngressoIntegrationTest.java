@@ -184,7 +184,8 @@ class IngressoIntegrationTest {
         List<Integer> statusRecebidos = emParalelo(10, () ->
                 reservar(idUsuario, idAssento, "INTEIRA", chave).andReturn().getResponse().getStatus());
 
-        assertThat(statusRecebidos).containsOnly(202, 409).contains(202);
+        // isSubsetOf: toda resposta é 202 ou 409 (todas 202 também é válido, se os pedidos não se sobrepuserem).
+        assertThat(statusRecebidos).isSubsetOf(202, 409).contains(202);
         assertThat(contarIngressosDoUsuario(idUsuario)).isEqualTo(1);
     }
 
