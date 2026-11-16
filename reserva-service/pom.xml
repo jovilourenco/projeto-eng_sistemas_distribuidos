@@ -18,6 +18,8 @@
 		<java.version>17</java.version>
         <org.mapstruct.version>1.5.5.Final</org.mapstruct.version>
         <byte-buddy.version>1.15.10</byte-buddy.version>
+        <!-- O 1.18.x do Spring Boot 3.1 não conversa com o Docker Engine 29+ (exige API >= 1.44). -->
+        <testcontainers.version>1.21.4</testcontainers.version>
 	</properties>
 
 	<dependencies>
@@ -62,6 +64,21 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-testcontainers</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.testcontainers</groupId>
+			<artifactId>junit-jupiter</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.testcontainers</groupId>
+			<artifactId>postgresql</artifactId>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 
 	<build>
