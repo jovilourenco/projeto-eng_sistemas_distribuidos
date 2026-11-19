@@ -10,7 +10,7 @@ O professor disponibilizou um kit de testes (carga, pico, corrida, idempotência
 
 ## Decisão
 
-1. A compra aceita de 1 a 4 assentos, tudo ou nada, no formato do contrato: `POST /reservas`, `POST /reservas/{id}/pagamento` e `GET /reservas/{id}`, expostas pelo API Gateway. A disputa por assentos é resolvida de forma síncrona pela trava do Redis (resposta 409), conforme o ADR-003.
+1. A compra aceita de 1 a 4 assentos, tudo ou nada. As rotas continuam as do ADR-002 (`POST /ingressos`, `GET /ingressos/{id}` e `POST /ingressos/{id}/cancelamento`), acrescidas de `POST /ingressos/{id}/pagamento`; o adaptador do kit as mapeia para as rotas do contrato. A disputa por assentos é resolvida de forma síncrona pela trava do Redis (resposta 409), conforme o ADR-003. O API Gateway é o ponto de entrada único.
 2. Os identificadores continuam inteiros. A cópia do kit traduz os códigos de texto (E1, ARENA-A-01-001, U000123) por um mapa gerado na carga dos dados.
 3. Os valores continuam em reais no sistema. A conversão para centavos ocorre na leitura do estado, na cópia do kit.
 4. A autenticação (Keycloak e JWT) permanece ativa no perfil normal e é desativada apenas no perfil de teste. Nesse perfil, o usuário vem no corpo da requisição (`usuario_id`).
