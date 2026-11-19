@@ -28,9 +28,8 @@ mkdir -p "$SAIDA"
 echo "== Grupo $GRUPO em $BASE, perfil $PERFIL"
 for C in "${CENARIOS[@]}"; do
   echo "-- $C: zerando e carregando os dados"
-  curl -fsS -X POST "${CAB[@]}" "$BASE/_teste/reset" >/dev/null
-  curl -fsS -X POST "${CAB[@]}" -H 'Content-Type: application/json' \
-       --data-binary "@$DADOS/carga.json" "$BASE/_teste/carga" >/dev/null
+  "$RAIZ/carga/resetar.sh"
+  "$RAIZ/carga/carregar.sh" "$DADOS"
   echo "-- $C: rodando o k6"
   rm -f "$SAIDA/$C.console.log" "$SAIDA/$C.resumo.json" "$SAIDA/$C.verificacao.json"
   ( cd "$RAIZ" && "$K6" run --quiet -e CENARIO="$C" -e PERFIL="$PERFIL" -e ADAPTADOR="$ADAPTADOR" \
