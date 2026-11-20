@@ -2,6 +2,7 @@
 import http from 'k6/http';
 import { sleep } from 'k6';
 import { Counter, Rate, Trend } from 'k6/metrics';
+import { idEvento, idUsuario, idAssento, codigoAssento } from './ids.js';
 
 const caminhoAdaptador = __ENV.ADAPTADOR || '../adaptadores/referencia.json';
 export const adaptador = JSON.parse(open(caminhoAdaptador));
@@ -78,19 +79,20 @@ function enviar(req) {
 }
 
 export function listarAssentos(eventoId, setor) {
-  const res = enviar(requisicao(Object.assign({ nome: 'listar_assentos' }, R.listar_assentos), { evento_id: eventoId, setor }));
+  const res = enviar(requisicao(Object.assign({ nome: 'listar_assentos' }, R.listar_assentos), { evento_id: idEvento(eventoId), setor }));
   m.tListar.add(res.timings.duration);
   if (res.status !== 200) { registrarFalha(res, 'listar'); return null; }
   m.taxaErro.add(false);
   const lista = pegar(json(res), R.listar_assentos.campo_lista) || [];
   const disp = R.listar_assentos.valores_disponivel;
-  return lista.map((a) => ({ id: pegar(a, R.listar_assentos.campo_id),
+  return lista.map((a) => ({ id: codigoAssento(eventoId, pegar(a, R.listar_assentos.campo_id)),
     disponivel: disp.indexOf(pegar(a, R.listar_assentos.campo_status)) >= 0 }));
 }
 
 export function reqReservar(it) {
   return requisicao(Object.assign({ nome: 'reservar' }, R.reservar),
-    { evento_id: it.evento_id, usuario_id: it.usuario_id, assento_ids: it.assento_ids }, `${it.id}-r`);
+    { evento_id: idEvento(it.evento_id), usuario_id: idUsuario(it.usuario_id),
+      assento_ids: it.assento_ids.map((a) => idAssento(it.evento_id, a)) }, `${it.id}-r`);
 }
 
 export function reqPagar(it, reservaId) {

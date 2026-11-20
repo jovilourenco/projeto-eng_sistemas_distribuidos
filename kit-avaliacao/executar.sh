@@ -33,7 +33,7 @@ for C in "${CENARIOS[@]}"; do
   echo "-- $C: rodando o k6"
   rm -f "$SAIDA/$C.console.log" "$SAIDA/$C.resumo.json" "$SAIDA/$C.verificacao.json"
   ( cd "$RAIZ" && "$K6" run --quiet -e CENARIO="$C" -e PERFIL="$PERFIL" -e ADAPTADOR="$ADAPTADOR" \
-      -e DADOS="$DADOS" -e FATOR="$FATOR" -e SAIDA="$SAIDA" --console-output "$SAIDA/$C.console.log" \
+      -e DADOS="$DADOS" -e FATOR="$FATOR" -e SAIDA="$SAIDA" -e MAPA_IDS="$RAIZ/carga/saida/mapa_ids.json" --console-output "$SAIDA/$C.console.log" \
       testes/cenarios.js ) || echo "   (k6 terminou com erro; o verificador registra o que houver)"
   echo "-- $C: verificando invariantes"
   python3 "$RAIZ/verificador/verificar.py" --adaptador "$ADAPTADOR" --cenario "$C" \

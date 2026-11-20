@@ -2,7 +2,11 @@
 """Converte dados/carga.json em SQL para o evento_assento_db e gera o mapa de ids (texto -> inteiro).
 
 Uso: gerar_sql.py <carga.json> <pasta-de-saida>
-Saídas: carga.sql (COPY de eventos e assentos, com ids explícitos) e mapa_ids.json.
+Saídas:
+  carga.sql      COPY de eventos e assentos, com ids explícitos
+  mapa_ids.json  mapa compacto: por evento, o id e, por setor, o id do primeiro assento.
+                 Os códigos do kit seguem LOCAL-SETOR-FF-NNN (fila e número em ordem), então o id de um
+                 assento é base + (fila - 1) * assentos_por_fila + (numero - 1).
 """
 import json
 import pathlib
@@ -21,21 +25,28 @@ def main(caminho_carga, pasta_saida):
     saida.mkdir(parents=True, exist_ok=True)
     locais = {l["local_id"]: l for l in d["locais"]}
 
-    mapa = {"eventos": {}, "assentos": {}}
+    mapa = {"eventos": {}}
     linhas_evento, linhas_assento = [], []
-    proximo_assento = 1
+    proximo = 1
     for i, ev in enumerate(d["eventos"], start=1):
-        mapa["eventos"][ev["evento_id"]] = i
+        local = ev["local_id"]
         data = ev["data"][:19].replace("T", " ")
         linhas_evento.append(f"{i}\t{ev['nome']}\t{ev['nome']}\t{data}\t{TIPO_EVENTO_SHOW}")
-        ids = {}
-        for setor in locais[ev["local_id"]]["setores"]:
+        setores_mapa = []
+        for setor in locais[local]["setores"]:
+            prefixo = f"{local}-{setor['setor']}"
+            esperado = [f"{prefixo}-{f:02d}-{n:03d}"
+                        for f in range(1, setor["filas"] + 1)
+                        for n in range(1, setor["assentos_por_fila"] + 1)]
+            if setor["assentos"] != esperado:
+                sys.exit(f"padrão de códigos inesperado no setor {prefixo}: o mapa compacto não se aplica")
+            setores_mapa.append({"setor": setor["setor"], "prefixo": prefixo, "filas": setor["filas"],
+                                 "por_fila": setor["assentos_por_fila"], "base": proximo})
             valor = centavos_para_reais(setor["preco"])
-            for codigo in setor["assentos"]:
-                ids[codigo] = proximo_assento
-                linhas_assento.append(f"{proximo_assento}\t{i}\t{setor['setor']}\t{valor}")
-                proximo_assento += 1
-        mapa["assentos"][ev["evento_id"]] = ids
+            for _ in setor["assentos"]:
+                linhas_assento.append(f"{proximo}\t{i}\t{setor['setor']}\t{valor}")
+                proximo += 1
+        mapa["eventos"][ev["evento_id"]] = {"id": i, "setores": setores_mapa}
 
     with open(saida / "carga.sql", "w", encoding="utf-8") as f:
         f.write("BEGIN;\n")
