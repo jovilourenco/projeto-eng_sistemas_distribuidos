@@ -1,4 +1,4 @@
-# ADR-004: Adaptação ao kit de avaliação do professor
+# ADR-006: Adaptação ao kit de avaliação do professor
 
 - **Status:** Aceito
 - **Data:** 2026-11-18

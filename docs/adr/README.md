@@ -9,6 +9,7 @@ Um ADR fica "Pendente" enquanto está em revisão no PR e passa a "Aceito" após
 | [ADR-001](ADR-001-broker-de-mensagens.md) | Broker de mensagens | Pendente |
 | [ADR-002](ADR-002-saga-orquestrada-pelo-servico-de-reservas.md) | Coordenação da SAGA de compra | Pendente |
 | [ADR-003](ADR-003-fonte-da-verdade-do-status-do-assento.md) | Fonte da verdade do status do assento | Pendente |
+| [ADR-006](ADR-006-adaptacao-ao-kit-de-avaliacao.md) | Adaptação ao kit de avaliação do professor | Aceito |
 
 ## Próximos ADRs
 
