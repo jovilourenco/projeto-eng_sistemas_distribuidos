@@ -9,5 +9,5 @@ import br.engsistemasdistribuidos.reserva.model.OperacaoIdempotente;
 
 public interface ChaveIdempotenciaRepository extends JpaRepository<ChaveIdempotencia, UUID> {
 
-    boolean existsByIdIngressoAndOperacaoAndChave(UUID idIngresso, OperacaoIdempotente operacao, String chave);
+    boolean existsByIdReservaAndOperacaoAndChave(UUID idReserva, OperacaoIdempotente operacao, String chave);
 }

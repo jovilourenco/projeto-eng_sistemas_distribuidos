@@ -15,6 +15,9 @@ spring:
     driver-class-name: org.postgresql.Driver
 
   jpa:
+    # Explícito: as rotas de pagamento e cancelamento leem a reserva fora de transação e a alteram dentro de
+    # uma transação curta (TransactionTemplate); o EntityManager da requisição mantém a mesma entidade nos dois.
+    open-in-view: true
     hibernate:
       ddl-auto: validate
     show-sql: true
@@ -26,7 +29,18 @@ spring:
     enabled: true
     locations: classpath:db/migration
 
-# Prazo para pagamento do ingresso e validade da trava do assento no Redis (ADR-002 e ADR-003).
+  # Erros no formato ProblemDetail (RFC 7807), com a mensagem de cada ResponseStatusException no campo "detail".
+  # Exceções inesperadas continuam sem detalhes para o cliente.
+  mvc:
+    problemdetails:
+      enabled: true
+
+  # Aceita "pix" e "aprovar" (contrato do kit de avaliação) além de "PIX" e "APROVAR".
+  jackson:
+    mapper:
+      accept-case-insensitive-enums: true
+
+# Prazo para pagamento da reserva e validade da trava dos assentos no Redis (ADR-002 e ADR-003).
 reserva:
   prazo-pagamento: 9m
 

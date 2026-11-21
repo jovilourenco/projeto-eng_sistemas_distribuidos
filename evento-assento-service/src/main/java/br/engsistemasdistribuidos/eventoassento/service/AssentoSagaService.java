@@ -5,11 +5,12 @@ import br.engsistemasdistribuidos.eventoassento.mensageria.RespostaAssento;
 
 /**
  * Aplica os comandos da SAGA de compra sobre o status dos assentos (ADR-003).
+ * Cada comando vale para todos os assentos da compra, numa única transação: ou todos mudam, ou nenhum.
  * Cada método é idempotente: repetir o mesmo comando produz a mesma resposta.
  */
 public interface AssentoSagaService {
 
-    /** DISPONIVEL → RESERVADO. Responde assento.reservado (com o valor) ou assento.indisponivel. */
+    /** DISPONIVEL → RESERVADO. Responde assento.reservado (com os valores) ou assento.indisponivel. */
     RespostaAssento reservar(ComandoAssento comando);
 
     /** RESERVADO → VENDIDO. Responde assento.vendido ou assento.venda_recusada. */

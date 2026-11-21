@@ -1,7 +1,7 @@
 package br.engsistemasdistribuidos.eventoassento.mensageria;
 
-import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -10,23 +10,23 @@ import java.util.UUID;
  * @param idMensagem identificador desta resposta
  * @param idComando  identificador do comando que originou a resposta
  * @param idCompra   compra que enviou o comando
- * @param idAssento  assento alvo do comando
+ * @param idAssentos assentos do comando, na mesma ordem em que vieram
  * @param tipo       resultado, por exemplo assento.reservado ou assento.indisponivel
- * @param valor      valor do assento no momento da reserva; preenchido apenas em assento.reservado
+ * @param valores    preço de cada assento no momento da reserva; preenchido apenas em assento.reservado
  * @param dataHora   momento em que a resposta foi emitida
  */
 public record RespostaAssento(
         UUID idMensagem,
         UUID idComando,
         UUID idCompra,
-        Integer idAssento,
+        List<Integer> idAssentos,
         String tipo,
-        BigDecimal valor,
+        List<ValorAssento> valores,
         Instant dataHora) {
 
-    public static RespostaAssento para(ComandoAssento comando, String tipo, BigDecimal valor) {
+    public static RespostaAssento para(ComandoAssento comando, String tipo, List<ValorAssento> valores) {
         return new RespostaAssento(UUID.randomUUID(), comando.idMensagem(), comando.idCompra(),
-                comando.idAssento(), tipo, valor, Instant.now());
+                comando.idAssentos(), tipo, valores, Instant.now());
     }
 
     public static RespostaAssento para(ComandoAssento comando, String tipo) {
