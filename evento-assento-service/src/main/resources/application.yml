@@ -1,6 +1,10 @@
 spring:
   application:
     name: evento-assento-service
+  data:
+    redis:
+      host: localhost
+      port: 6379
 
   datasource:
     url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:evento_assento_db}
