@@ -11,16 +11,9 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.http.MediaType;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import com.jayway.jsonpath.JsonPath;
 
@@ -28,24 +21,14 @@ import com.jayway.jsonpath.JsonPath;
  * Testes de integração dos endpoints de assentos: aplicação completa + PostgreSQL real (Testcontainers).
  * Requer o Docker em execução. Cada teste cria o próprio evento, então não dependem uns dos outros.
  */
-@SpringBootTest
-@AutoConfigureMockMvc
-@Testcontainers
-class AssentoIntegrationTest {
-
-    @Container
-    @ServiceConnection
-    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:15");
+class AssentoIntegrationTest extends IntegracaoComContainers {
 
     @Autowired
     private MockMvc mockMvc;
 
-    @Autowired
-    private JdbcTemplate jdbcTemplate;
-
     @Test
     void cadastrarEmLote_criaAssentosDisponiveis() throws Exception {
-        int idEvento = criarEvento();
+        int idEvento = criarEventoPelaApi();
 
         mockMvc.perform(post("/eventos/{idEvento}/assentos", idEvento)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -60,7 +43,7 @@ class AssentoIntegrationTest {
 
     @Test
     void cadastrarEmLote_quantidadeInvalida_retorna400() throws Exception {
-        int idEvento = criarEvento();
+        int idEvento = criarEventoPelaApi();
 
         mockMvc.perform(post("/eventos/{idEvento}/assentos", idEvento)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -78,7 +61,7 @@ class AssentoIntegrationTest {
 
     @Test
     void listar_filtraPorStatus() throws Exception {
-        int idEvento = criarEvento();
+        int idEvento = criarEventoPelaApi();
         List<Integer> ids = criarLote(idEvento, 3);
         marcarComoReservado(ids.get(0));
 
@@ -97,8 +80,8 @@ class AssentoIntegrationTest {
 
     @Test
     void buscarPorId_assentoDeOutroEvento_retorna404() throws Exception {
-        int idEventoA = criarEvento();
-        int idEventoB = criarEvento();
+        int idEventoA = criarEventoPelaApi();
+        int idEventoB = criarEventoPelaApi();
         int idAssentoDoA = criarLote(idEventoA, 1).get(0);
 
         mockMvc.perform(get("/eventos/{idEvento}/assentos/{idAssento}", idEventoA, idAssentoDoA))
@@ -110,7 +93,7 @@ class AssentoIntegrationTest {
 
     @Test
     void atualizar_assentoDisponivel_alteraSoOsCamposInformados() throws Exception {
-        int idEvento = criarEvento();
+        int idEvento = criarEventoPelaApi();
         int idAssento = criarLote(idEvento, 1).get(0);
 
         mockMvc.perform(put("/eventos/{idEvento}/assentos/{idAssento}", idEvento, idAssento)
@@ -131,7 +114,7 @@ class AssentoIntegrationTest {
 
     @Test
     void atualizar_assentoReservado_retorna409() throws Exception {
-        int idEvento = criarEvento();
+        int idEvento = criarEventoPelaApi();
         int idAssento = criarLote(idEvento, 1).get(0);
         marcarComoReservado(idAssento);
 
@@ -143,7 +126,7 @@ class AssentoIntegrationTest {
 
     @Test
     void excluir_assentoDisponivel_retorna204_eDepoisNaoExiste() throws Exception {
-        int idEvento = criarEvento();
+        int idEvento = criarEventoPelaApi();
         int idAssento = criarLote(idEvento, 1).get(0);
 
         mockMvc.perform(delete("/eventos/{idEvento}/assentos/{idAssento}", idEvento, idAssento))
@@ -155,7 +138,7 @@ class AssentoIntegrationTest {
 
     @Test
     void excluir_assentoReservado_retorna409() throws Exception {
-        int idEvento = criarEvento();
+        int idEvento = criarEventoPelaApi();
         int idAssento = criarLote(idEvento, 1).get(0);
         marcarComoReservado(idAssento);
 
@@ -165,7 +148,7 @@ class AssentoIntegrationTest {
 
     // ---- Apoio aos testes ----
 
-    private int criarEvento() throws Exception {
+    private int criarEventoPelaApi() throws Exception {
         String json = "{\"titulo\":\"Evento de Teste\",\"descricao\":\"Descricao do evento\","
                 + "\"dataEvento\":\"2026-12-20T20:00:00\",\"tipoEvento\":{\"id\":4}}";
 

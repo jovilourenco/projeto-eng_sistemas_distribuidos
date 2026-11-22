@@ -24,5 +24,23 @@ spring:
     enabled: true
     locations: classpath:db/migration
 
+  # RabbitMQ (ADR-001): comandos da SAGA vindos do Serviço de Reservas
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USER:admin}
+    password: ${RABBITMQ_PASSWORD:admin}
+    listener:
+      simple:
+        # A mensagem só é confirmada depois que o listener termina sem erro (transação local concluída).
+        acknowledge-mode: auto
+        # Esgotadas as tentativas, a mensagem é rejeitada sem voltar para a fila e vai para a fila de mensagens mortas.
+        default-requeue-rejected: false
+        retry:
+          enabled: true
+          max-attempts: 3
+          initial-interval: 1s
+          multiplier: 2
+
 server:
   port: 8081
