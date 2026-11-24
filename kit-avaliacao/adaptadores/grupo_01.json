@@ -1,33 +1,32 @@
 {
   "grupo": "grupo_01",
-  "descricao": "TicketFlow. Adaptador inicial gerado pelo kit: o grupo deve confirmar a URL, as rotas e os campos antes do teste.",
-  "base_url": "http://localhost:8080",
+  "descricao": "TicketFlow, adaptado: ids inteiros traduzidos em lib.js; usuário por cabeçalhos X-Usuario-* (autenticação simulada); estado lido dos bancos em verificar.py.",
+  "base_url": "http://localhost:8082",
   "cabecalhos": {},
   "cabecalho_idempotencia": "Idempotency-Key",
-  "cabecalhos_teste": {
-    "X-Chave-Teste": "kit-avaliacao"
-  },
+  "cabecalhos_teste": {},
   "timeout_requisicao": "30s",
   "rotas": {
     "listar_assentos": {
       "metodo": "GET",
+      "base_url": "http://localhost:8081",
       "caminho": "/eventos/{evento_id}/assentos?setor={setor}",
-      "campo_lista": "assentos",
-      "campo_id": "assento_id",
+      "campo_lista": "",
+      "campo_id": "id",
       "campo_status": "status",
       "valores_disponivel": [
-        "disponivel"
+        "DISPONIVEL"
       ]
     },
     "reservar": {
       "metodo": "POST",
       "caminho": "/reservas",
       "corpo": {
-        "evento_id": "{evento_id}",
-        "usuario_id": "{usuario_id}",
-        "assento_ids": "{assento_ids}"
+        "idEvento": "{evento_id}",
+        "idAssentos": "{assento_ids}",
+        "tipoIngresso": "INTEIRA"
       },
-      "campo_reserva_id": "reserva_id",
+      "campo_reserva_id": "id",
       "codigos_sucesso": [
         200,
         201
@@ -40,7 +39,7 @@
       "metodo": "POST",
       "caminho": "/reservas/{reserva_id}/pagamento",
       "corpo": {
-        "metodo": "pix",
+        "metodo": "PIX",
         "simulacao": "{simulacao}"
       },
       "codigos_sucesso": [
@@ -50,7 +49,8 @@
         202
       ],
       "codigos_recusa": [
-        402
+        402,
+        409
       ]
     },
     "consultar": {
@@ -59,14 +59,14 @@
       "campo_status": "status",
       "valores_status": {
         "confirmada": [
-          "confirmada"
+          "CONFIRMADA"
         ],
         "recusada": [
-          "recusada",
-          "cancelada"
+          "RECUSADA",
+          "CANCELADA"
         ],
         "expirada": [
-          "expirada"
+          "EXPIRADA"
         ]
       }
     }
@@ -75,5 +75,5 @@
     "diretorio_compose": "",
     "servico_para_derrubar": ""
   },
-  "pendencias_do_grupo": "Rotas atuais em /ingressos e /ingressos/{id}/pagamento (README da branch dev). Mapear 'reservar' para POST /ingressos e 'pagar' para POST /ingressos/{reserva_id}/pagamento, ou expor as rotas do contrato no Spring Cloud Gateway. Token do Keycloak em 'cabecalhos'."
+  "pendencias_do_grupo": "Endereços por rota até o Gateway existir (listagem no Eventos, resto no Reservas); ajustar as portas quando o Compose completo (#52) fixar o plano. A listagem por setor depende da issue #55."
 }

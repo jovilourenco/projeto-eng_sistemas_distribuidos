@@ -21,3 +21,10 @@ A cópia do kit entrou sem alterações no commit `f5fbdd2`. Tudo o que mudou es
 
 - `verificador/verificar.py`: ler o estado final dos bancos no lugar de `GET /_teste/vendas`, e converter os valores de reais para centavos.
 - Fechar o adaptador quando a compra com vários assentos e o pagamento estiverem prontos.
+
+## Ajustes ao contrato do TicketFlow (adaptador e `testes/lib.js`)
+
+- **Rotas por endereço:** `rota.base_url` opcional; sem o API Gateway, a listagem de assentos vai ao Serviço de Eventos e Assentos e o restante ao Serviço de Reservas.
+- **Usuário:** o TicketFlow usa autenticação simulada por cabeçalhos (`X-Usuario-Id`, `X-Usuario-Perfil`). A reserva e o pagamento enviam o dono da compra; o acompanhamento do status usa o perfil de gestor.
+- **`simulacao` em maiúsculas:** o enum do serviço aceita `APROVAR`, `RECUSAR` e `ATRASAR`; o kit envia em minúsculas.
+- **Pagamento:** `402` (recusado) e `409` (reserva expirada ou cancelada) contam como recusa, e `202` aguarda o status final.

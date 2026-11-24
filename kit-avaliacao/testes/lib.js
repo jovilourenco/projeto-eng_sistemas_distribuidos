@@ -8,6 +8,13 @@ const caminhoAdaptador = __ENV.ADAPTADOR || '../adaptadores/referencia.json';
 export const adaptador = JSON.parse(open(caminhoAdaptador));
 const R = adaptador.rotas;
 
+// Autenticação simulada do TicketFlow: o usuário vai nos cabeçalhos X-Usuario-*. A reserva e o pagamento
+// levam o dono da compra; o acompanhamento do status usa o perfil de gestor, que lê qualquer reserva.
+const CAB_GESTOR = { 'X-Usuario-Id': '1', 'X-Usuario-Perfil': 'GESTOR_EVENTO' };
+function cabecalhosUsuario(it) {
+  return { 'X-Usuario-Id': String(idUsuario(it.usuario_id)), 'X-Usuario-Perfil': 'USUARIO' };
+}
+
 export const m = {
   tListar: new Trend('t_listar', true),
   tReservar: new Trend('t_reservar', true),
@@ -64,7 +71,7 @@ export function registrarFalha(res, operacao) {
 export function requisicao(rota, vars, chave, extraHeaders) {
   const headers = Object.assign({ 'Content-Type': 'application/json' }, adaptador.cabecalhos || {}, extraHeaders || {});
   if (chave) headers[adaptador.cabecalho_idempotencia || 'Idempotency-Key'] = chave;
-  const url = adaptador.base_url + preencher(rota.caminho, vars, true);
+  const url = (rota.base_url || adaptador.base_url) + preencher(rota.caminho, vars, true);
   const corpo = rota.corpo ? JSON.stringify(preencher(rota.corpo, vars, false)) : null;
   return {
     method: rota.metodo,
@@ -92,12 +99,13 @@ export function listarAssentos(eventoId, setor) {
 export function reqReservar(it) {
   return requisicao(Object.assign({ nome: 'reservar' }, R.reservar),
     { evento_id: idEvento(it.evento_id), usuario_id: idUsuario(it.usuario_id),
-      assento_ids: it.assento_ids.map((a) => idAssento(it.evento_id, a)) }, `${it.id}-r`);
+      assento_ids: it.assento_ids.map((a) => idAssento(it.evento_id, a)) }, `${it.id}-r`, cabecalhosUsuario(it));
 }
 
 export function reqPagar(it, reservaId) {
   return requisicao(Object.assign({ nome: 'pagar' }, R.pagar),
-    { reserva_id: reservaId, simulacao: it.simulacao }, `${it.id}-p`);
+    { reserva_id: reservaId, simulacao: String(it.simulacao).toUpperCase() }, `${it.id}-p`,
+    cabecalhosUsuario(it));
 }
 
 // Interpreta a resposta da reserva: {resultado: 'ok'|'conflito'|'rejeitada'|'erro', reservaId}
@@ -123,7 +131,7 @@ function aguardarFinal(reservaId) {
   const limite = Date.now() + 30000;
   while (Date.now() < limite) {
     sleep(0.25);
-    const res = enviar(requisicao(Object.assign({ nome: 'consultar' }, R.consultar), { reserva_id: reservaId }));
+    const res = enviar(requisicao(Object.assign({ nome: 'consultar' }, R.consultar), { reserva_id: reservaId }, null, CAB_GESTOR));
     if (res.status === 200) {
       const st = statusCanonico(pegar(json(res), R.consultar.campo_status));
       if (st) return st;
