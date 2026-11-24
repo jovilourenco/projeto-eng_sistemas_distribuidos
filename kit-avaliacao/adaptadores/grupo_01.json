@@ -1,0 +1,79 @@
+{
+  "grupo": "grupo_01",
+  "descricao": "TicketFlow, adaptado: ids inteiros traduzidos em lib.js; usuário por cabeçalhos X-Usuario-* (autenticação simulada); estado lido dos bancos em verificar.py.",
+  "base_url": "http://localhost:8082",
+  "cabecalhos": {},
+  "cabecalho_idempotencia": "Idempotency-Key",
+  "cabecalhos_teste": {},
+  "timeout_requisicao": "30s",
+  "rotas": {
+    "listar_assentos": {
+      "metodo": "GET",
+      "base_url": "http://localhost:8081",
+      "caminho": "/eventos/{evento_id}/assentos?setor={setor}",
+      "campo_lista": "",
+      "campo_id": "id",
+      "campo_status": "status",
+      "valores_disponivel": [
+        "DISPONIVEL"
+      ]
+    },
+    "reservar": {
+      "metodo": "POST",
+      "caminho": "/reservas",
+      "corpo": {
+        "idEvento": "{evento_id}",
+        "idAssentos": "{assento_ids}",
+        "tipoIngresso": "INTEIRA"
+      },
+      "campo_reserva_id": "id",
+      "codigos_sucesso": [
+        200,
+        201
+      ],
+      "codigos_conflito": [
+        409
+      ]
+    },
+    "pagar": {
+      "metodo": "POST",
+      "caminho": "/reservas/{reserva_id}/pagamento",
+      "corpo": {
+        "metodo": "PIX",
+        "simulacao": "{simulacao}"
+      },
+      "codigos_sucesso": [
+        200
+      ],
+      "codigos_pendente": [
+        202
+      ],
+      "codigos_recusa": [
+        402,
+        409
+      ]
+    },
+    "consultar": {
+      "metodo": "GET",
+      "caminho": "/reservas/{reserva_id}",
+      "campo_status": "status",
+      "valores_status": {
+        "confirmada": [
+          "CONFIRMADA"
+        ],
+        "recusada": [
+          "RECUSADA",
+          "CANCELADA"
+        ],
+        "expirada": [
+          "EXPIRADA"
+        ]
+      }
+    }
+  },
+  "caos": {
+    "diretorio_compose": "",
+    "servico_para_derrubar": ""
+  },
+  "pendencias_do_grupo": "Endereços por rota até o Gateway existir (listagem no Eventos, resto no Reservas); ajustar as portas quando o Compose completo (#52) fixar o plano. A listagem por setor depende da issue #55."
+}

@@ -1,0 +1,79 @@
+{
+  "grupo": "grupo_08",
+  "descricao": "CineSeat. Adaptador inicial gerado pelo kit: o grupo deve confirmar a URL, as rotas e os campos antes do teste.",
+  "base_url": "http://localhost:3000",
+  "cabecalhos": {},
+  "cabecalho_idempotencia": "Idempotency-Key",
+  "cabecalhos_teste": {
+    "X-Chave-Teste": "kit-avaliacao"
+  },
+  "timeout_requisicao": "30s",
+  "rotas": {
+    "listar_assentos": {
+      "metodo": "GET",
+      "caminho": "/eventos/{evento_id}/assentos?setor={setor}",
+      "campo_lista": "assentos",
+      "campo_id": "assento_id",
+      "campo_status": "status",
+      "valores_disponivel": [
+        "disponivel"
+      ]
+    },
+    "reservar": {
+      "metodo": "POST",
+      "caminho": "/reservas",
+      "corpo": {
+        "evento_id": "{evento_id}",
+        "usuario_id": "{usuario_id}",
+        "assento_ids": "{assento_ids}"
+      },
+      "campo_reserva_id": "reserva_id",
+      "codigos_sucesso": [
+        200,
+        201
+      ],
+      "codigos_conflito": [
+        409
+      ]
+    },
+    "pagar": {
+      "metodo": "POST",
+      "caminho": "/reservas/{reserva_id}/pagamento",
+      "corpo": {
+        "metodo": "pix",
+        "simulacao": "{simulacao}"
+      },
+      "codigos_sucesso": [
+        200
+      ],
+      "codigos_pendente": [
+        202
+      ],
+      "codigos_recusa": [
+        402
+      ]
+    },
+    "consultar": {
+      "metodo": "GET",
+      "caminho": "/reservas/{reserva_id}",
+      "campo_status": "status",
+      "valores_status": {
+        "confirmada": [
+          "confirmada"
+        ],
+        "recusada": [
+          "recusada",
+          "cancelada"
+        ],
+        "expirada": [
+          "expirada"
+        ]
+      }
+    }
+  },
+  "caos": {
+    "diretorio_compose": "",
+    "servico_para_derrubar": ""
+  },
+  "pendencias_do_grupo": "Gateway em localhost:3000 (README). Pagamento tem rota de estorno POST /payments/{reservation_id}/void; mapear 'pagar' para a rota de cobrança do grupo. Se o pagamento for assíncrono, responder 202 e expor GET /reservas/{id}."
+}
