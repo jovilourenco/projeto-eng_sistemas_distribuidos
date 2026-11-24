@@ -2,6 +2,9 @@ package br.engsistemasdistribuidos.eventoassento.mensageria;
 
 import static br.engsistemasdistribuidos.eventoassento.mensageria.MensagensAssento.*;
 
+import java.util.HashSet;
+import java.util.List;
+
 import org.springframework.amqp.AmqpRejectAndDontRequeueException;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -45,11 +48,16 @@ public class AssentoComandoListener {
         rabbitTemplate.convertAndSend(EXCHANGE_RESPOSTAS, resposta.tipo(), resposta);
     }
 
-    // Um comando malformado nunca vai ser aplicado: esgotadas as tentativas, vai para a fila de mensagens mortas.
+    // Um comando malformado nunca vai ser aplicado: vai direto para a fila de mensagens mortas, sem novas tentativas.
     private void validar(ComandoAssento comando, String tipo) {
-        if (comando == null || comando.idMensagem() == null || comando.idCompra() == null
-                || comando.idAssento() == null) {
+        if (comando == null || comando.idMensagem() == null || comando.idCompra() == null) {
             throw new AmqpRejectAndDontRequeueException("Comando incompleto: " + comando);
+        }
+        List<Integer> assentos = comando.idAssentos();
+        if (assentos == null || assentos.isEmpty() || assentos.size() > MAXIMO_ASSENTOS
+                || assentos.contains(null) || new HashSet<>(assentos).size() != assentos.size()) {
+            throw new AmqpRejectAndDontRequeueException(
+                    "Comando deve trazer de 1 a " + MAXIMO_ASSENTOS + " assentos distintos: " + comando);
         }
         if (RESERVAR.equals(tipo) && comando.idEvento() == null) {
             throw new AmqpRejectAndDontRequeueException("Comando assento.reservar sem idEvento: " + comando);

@@ -30,6 +30,9 @@ public final class MensagensAssento {
     public static final String LIBERADO = "assento.liberado";
     public static final String LIBERACAO_RECUSADA = "assento.liberacao_recusada";
 
+    // Uma compra reserva de 1 a 4 assentos (ADR-004).
+    public static final int MAXIMO_ASSENTOS = 4;
+
     private MensagensAssento() {
     }
 }

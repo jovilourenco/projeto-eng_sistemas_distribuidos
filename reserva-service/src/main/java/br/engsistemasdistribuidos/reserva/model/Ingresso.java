@@ -1,18 +1,20 @@
 package br.engsistemasdistribuidos.reserva.model;
 
-import java.time.LocalDateTime;
+import java.math.BigDecimal;
 import java.util.UUID;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import jakarta.persistence.Version;
 
-// idEvento, idAssento e idUsuario são referências lógicas a dados de outros serviços (sem FK).
-// O id é o identificador da compra na SAGA: derivado do usuário + Idempotency-Key (ADR-002), não gerado pelo banco.
+// Um ingresso por assento da reserva. idAssento é referência lógica ao Serviço de Eventos e Assentos (sem FK).
+// O status do ingresso não é gravado: ele é derivado do estado da compra (ADR-002, item 1).
 @Entity
 @Table(schema = "reserva", name = "ingresso")
 public class Ingresso {
@@ -21,39 +23,24 @@ public class Ingresso {
     @Column(name = "id_ingresso")
     private UUID id;
 
-    @Column(name = "id_evento", nullable = false)
-    private Integer idEvento;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "id_reserva", nullable = false)
+    private Reserva reserva;
 
     @Column(name = "id_assento", nullable = false)
     private Integer idAssento;
-
-    @Column(name = "id_usuario", nullable = false)
-    private Integer idUsuario;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "tipo_ingresso", nullable = false)
     private TipoIngresso tipoIngresso;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false)
-    private StatusIngresso status;
+    // Preço do assento no momento da reserva, informado pelo Serviço de Eventos e Assentos; nulo até lá.
+    @Column(name = "valor")
+    private BigDecimal valor;
 
-    @Column(name = "data_reserva", nullable = false)
-    private LocalDateTime dataReserva;
-
-    @Column(name = "data_expiracao", nullable = false)
-    private LocalDateTime dataExpiracao;
-
-    // Resumo (SHA-256) do corpo da requisição de criação: mesma chave com corpo diferente → 422 (ADR-002).
-    @Column(name = "hash_requisicao", nullable = false)
-    private String hashRequisicao;
-
-    // Controle de concorrência otimista: dois gatilhos simultâneos na mesma compra não se sobrescrevem (ADR-002).
-    // Integer (e não int): versão null indica ao Spring Data que o ingresso é novo, então o save faz INSERT.
-    // Com id atribuído e versão primitiva, ele tentaria um merge e não detectaria a chave duplicada.
-    @Version
-    @Column(name = "versao", nullable = false)
-    private Integer versao;
+    public StatusIngresso getStatus() {
+        return reserva.getEstado().statusIngresso();
+    }
 
     public UUID getId() {
         return id;
@@ -63,12 +50,12 @@ public class Ingresso {
         this.id = id;
     }
 
-    public Integer getIdEvento() {
-        return idEvento;
+    public Reserva getReserva() {
+        return reserva;
     }
 
-    public void setIdEvento(Integer idEvento) {
-        this.idEvento = idEvento;
+    public void setReserva(Reserva reserva) {
+        this.reserva = reserva;
     }
 
     public Integer getIdAssento() {
@@ -79,14 +66,6 @@ public class Ingresso {
         this.idAssento = idAssento;
     }
 
-    public Integer getIdUsuario() {
-        return idUsuario;
-    }
-
-    public void setIdUsuario(Integer idUsuario) {
-        this.idUsuario = idUsuario;
-    }
-
     public TipoIngresso getTipoIngresso() {
         return tipoIngresso;
     }
@@ -95,43 +74,11 @@ public class Ingresso {
         this.tipoIngresso = tipoIngresso;
     }
 
-    public StatusIngresso getStatus() {
-        return status;
+    public BigDecimal getValor() {
+        return valor;
     }
 
-    public void setStatus(StatusIngresso status) {
-        this.status = status;
-    }
-
-    public LocalDateTime getDataReserva() {
-        return dataReserva;
-    }
-
-    public void setDataReserva(LocalDateTime dataReserva) {
-        this.dataReserva = dataReserva;
-    }
-
-    public LocalDateTime getDataExpiracao() {
-        return dataExpiracao;
-    }
-
-    public void setDataExpiracao(LocalDateTime dataExpiracao) {
-        this.dataExpiracao = dataExpiracao;
-    }
-
-    public String getHashRequisicao() {
-        return hashRequisicao;
-    }
-
-    public void setHashRequisicao(String hashRequisicao) {
-        this.hashRequisicao = hashRequisicao;
-    }
-
-    public Integer getVersao() {
-        return versao;
-    }
-
-    public void setVersao(Integer versao) {
-        this.versao = versao;
+    public void setValor(BigDecimal valor) {
+        this.valor = valor;
     }
 }

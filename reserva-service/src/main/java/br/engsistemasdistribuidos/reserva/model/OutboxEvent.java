@@ -13,13 +13,13 @@ public class OutboxEvent {
     private UUID id;
 
     @Column(name = "agregado_tipo", nullable = false)
-    private String agregadoTipo; // Ex: "INGRESSO"
+    private String agregadoTipo; // Ex: "RESERVA"
 
     @Column(name = "agregado_id", nullable = false)
     private String agregadoId;
 
     @Column(name = "tipo_evento", nullable = false)
-    private String tipoEvento; // Não é o evento do TipoEvento.
+    private String tipoEvento; // Routing key da mensagem (ex.: "assento.reservar"). Não é o evento do TipoEvento.
 
     @Column(name = "payload", nullable = false, columnDefinition = "TEXT")
     private String payload; // O JSON com os dados que vão para o RabbitMQ

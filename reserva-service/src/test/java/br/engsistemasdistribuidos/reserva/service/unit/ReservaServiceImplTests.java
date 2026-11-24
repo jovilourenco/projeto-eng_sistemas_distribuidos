@@ -1,17 +1,17 @@
 package br.engsistemasdistribuidos.reserva.service.unit;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertSame;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -19,48 +19,52 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.redis.RedisConnectionFailureException;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.data.redis.core.script.RedisScript;
 import org.springframework.http.HttpStatus;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.server.ResponseStatusException;
 
-import br.engsistemasdistribuidos.reserva.model.ChaveIdempotencia;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+
+import br.engsistemasdistribuidos.reserva.model.EstadoReserva;
 import br.engsistemasdistribuidos.reserva.model.Ingresso;
-import br.engsistemasdistribuidos.reserva.model.OperacaoIdempotente;
-import br.engsistemasdistribuidos.reserva.model.OutboxEvent;
-import br.engsistemasdistribuidos.reserva.model.StatusIngresso;
+import br.engsistemasdistribuidos.reserva.model.MetodoPagamento;
+import br.engsistemasdistribuidos.reserva.model.Reserva;
+import br.engsistemasdistribuidos.reserva.model.SimulacaoPagamento;
 import br.engsistemasdistribuidos.reserva.model.TipoIngresso;
 import br.engsistemasdistribuidos.reserva.repository.ChaveIdempotenciaRepository;
-import br.engsistemasdistribuidos.reserva.repository.IngressoRepository;
 import br.engsistemasdistribuidos.reserva.repository.OutboxEventRepository;
+import br.engsistemasdistribuidos.reserva.repository.ReservaRepository;
+import br.engsistemasdistribuidos.reserva.service.ReservaService;
 import br.engsistemasdistribuidos.reserva.service.impl.ReservaServiceImpl;
 
+/**
+ * Caminhos difíceis de provocar com Redis e banco reais: Redis fora do ar, corrida entre duas requisições
+ * iguais e alterações simultâneas na mesma reserva. Os caminhos comuns estão no ReservaIntegrationTest.
+ */
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("unchecked")
-public class ReservaServiceImplTests {
+class ReservaServiceImplTests {
 
     private static final Duration PRAZO = Duration.ofMinutes(9);
-    private static final String LOCK_KEY = "assento:lock:10";
     private static final String CHAVE = "chave-1";
     private static final int USUARIO = 20;
+    private static final List<Integer> ASSENTOS = List.of(10, 11);
     private static final UUID ID_COMPRA = ReservaServiceImpl.derivarIdCompra(USUARIO, CHAVE);
-    private static final String DONO = ID_COMPRA.toString();
 
     @Mock
     private StringRedisTemplate redisTemplate;
 
     @Mock
-    private ValueOperations<String, String> valueOperations;
-
-    @Mock
-    private IngressoRepository ingressoRepository;
+    private ReservaRepository reservaRepository;
 
     @Mock
     private OutboxEventRepository outboxRepository;
@@ -76,8 +80,8 @@ public class ReservaServiceImplTests {
     @BeforeEach
     void setUp() {
         // Construção manual: o prazo (Duration) não pode ser injetado pelo @InjectMocks.
-        service = new ReservaServiceImpl(redisTemplate, ingressoRepository, outboxRepository,
-                chaveRepository, transactionTemplate, PRAZO);
+        service = new ReservaServiceImpl(redisTemplate, reservaRepository, outboxRepository, chaveRepository,
+                transactionTemplate, new ObjectMapper().registerModule(new JavaTimeModule()), PRAZO);
     }
 
     // O TransactionTemplate simulado só executa o bloco, sem transação de verdade.
@@ -86,198 +90,215 @@ public class ReservaServiceImplTests {
                 ((TransactionCallback<Object>) invocation.getArgument(0)).doInTransaction(null));
     }
 
-    private Ingresso criar(TipoIngresso tipo) {
-        return service.criarReserva(CHAVE, 1, 10, USUARIO, tipo);
+    private void resultadoDaTrava(Long resultado) {
+        when(redisTemplate.execute(any(RedisScript.class), anyList(), anyString(), anyString())).thenReturn(resultado);
     }
 
-    // Um ingresso já gravado por uma requisição anterior com a mesma chave e o corpo informado.
-    private Ingresso existente(TipoIngresso tipoDoCorpoOriginal) {
-        Ingresso ingresso = new Ingresso();
-        ingresso.setId(ID_COMPRA);
-        ingresso.setHashRequisicao(ReservaServiceImpl.hashRequisicao(1, 10, tipoDoCorpoOriginal));
-        ingresso.setStatus(StatusIngresso.PENDENTE_PAGAMENTO);
-        return ingresso;
+    private ReservaService.Criacao criar() {
+        return service.criarReserva(CHAVE, 1, ASSENTOS, USUARIO, TipoIngresso.INTEIRA);
     }
 
-    // ------------------------------------------------------------------ id da compra
+    private static Reserva reservaGravada() {
+        Reserva reserva = new Reserva();
+        reserva.setId(ID_COMPRA);
+        reserva.setIdEvento(1);
+        reserva.setIdUsuario(USUARIO);
+        reserva.setEstado(EstadoReserva.INICIADA);
+        reserva.setHashRequisicao(ReservaServiceImpl.hashRequisicao(1, ASSENTOS, TipoIngresso.INTEIRA));
+        reserva.setDataReserva(LocalDateTime.now());
+        reserva.setDataExpiracao(LocalDateTime.now().plus(PRAZO));
+        return reserva;
+    }
+
+    // ------------------------------------------------------------------ id e resumo
 
     @Test
-    void derivarIdCompra_mesmoUsuarioEChave_geraSempreOMesmoId() {
+    void derivarIdCompra_mesmoUsuarioEChaveGeraOMesmoId_outroUsuarioGeraOutro() {
         assertThat(ReservaServiceImpl.derivarIdCompra(USUARIO, CHAVE)).isEqualTo(ID_COMPRA);
-    }
-
-    @Test
-    void derivarIdCompra_outroUsuarioComMesmaChave_geraIdDiferente() {
-        // Dois usuários podem, por acaso, gerar a mesma chave: as compras não podem se misturar.
         assertThat(ReservaServiceImpl.derivarIdCompra(USUARIO + 1, CHAVE)).isNotEqualTo(ID_COMPRA);
     }
 
     // ------------------------------------------------------------------ criação
 
     @Test
-    void criar_novaCompra_travaAssentoGravaIngressoEOutbox() {
+    void criar_redisForaDoAr_segueSemTravaEGravaAReserva() {
+        // ADR-003: a trava é só um filtro de admissão; sem ela, a disputa é resolvida no Eventos e Assentos.
+        when(reservaRepository.findComIngressosById(ID_COMPRA)).thenReturn(Optional.empty());
+        when(redisTemplate.execute(any(RedisScript.class), anyList(), anyString(), anyString()))
+                .thenThrow(new RedisConnectionFailureException("fora do ar"));
         executarTransacoes();
-        when(ingressoRepository.findById(ID_COMPRA)).thenReturn(Optional.empty());
-        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
-        when(valueOperations.setIfAbsent(LOCK_KEY, DONO, PRAZO)).thenReturn(true);
-        when(ingressoRepository.saveAndFlush(any(Ingresso.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(reservaRepository.saveAndFlush(any(Reserva.class))).thenAnswer(i -> i.getArgument(0));
 
-        Ingresso ingresso = criar(TipoIngresso.INTEIRA);
+        ReservaService.Criacao criacao = criar();
 
-        assertThat(ingresso.getId()).isEqualTo(ID_COMPRA);
-        assertThat(ingresso.getIdUsuario()).isEqualTo(USUARIO);
-        assertThat(ingresso.getStatus()).isEqualTo(StatusIngresso.PENDENTE_PAGAMENTO);
-        assertThat(ingresso.getDataExpiracao()).isEqualTo(ingresso.getDataReserva().plus(PRAZO));
-        assertThat(ingresso.getHashRequisicao()).hasSize(64);
-
-        var captor = ArgumentCaptor.forClass(OutboxEvent.class);
-        verify(outboxRepository).save(captor.capture());
-        assertThat(captor.getValue().getAgregadoTipo()).isEqualTo("INGRESSO");
-        assertThat(captor.getValue().getAgregadoId()).isEqualTo(DONO);
-        assertThat(captor.getValue().getTipoEvento()).isEqualTo("RESERVA_CRIADA");
-        assertThat(captor.getValue().getPayload()).contains(DONO).contains("\"idAssento\": 10");
-        assertThat(captor.getValue().isProcessado()).isFalse();
-
-        verify(redisTemplate, never()).execute(any(RedisScript.class), any(List.class), any());
+        assertThat(criacao.nova()).isTrue();
+        assertThat(criacao.reserva().getIngressos()).extracting(i -> i.getIdAssento()).containsExactly(10, 11);
+        verify(outboxRepository).save(any());
     }
 
     @Test
-    void criar_mesmaChaveMesmoCorpo_devolveCompraExistenteSemAcessarRedis() {
-        Ingresso original = existente(TipoIngresso.INTEIRA);
-        when(ingressoRepository.findById(ID_COMPRA)).thenReturn(Optional.of(original));
-
-        assertSame(original, criar(TipoIngresso.INTEIRA));
-
-        verifyNoInteractions(redisTemplate, outboxRepository);
-    }
-
-    @Test
-    void criar_mesmaChaveCorpoDiferente_retorna422SemAcessarRedis() {
-        Ingresso original = existente(TipoIngresso.INTEIRA);
-        when(ingressoRepository.findById(ID_COMPRA)).thenReturn(Optional.of(original));
-
-        var ex = assertThrows(ResponseStatusException.class, () -> criar(TipoIngresso.ESTUDANTE));
-
-        assertThat(ex.getStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
-        verifyNoInteractions(redisTemplate, outboxRepository);
-    }
-
-    @Test
-    void criar_assentoTravadoPorOutraCompra_retorna409() {
-        when(ingressoRepository.findById(ID_COMPRA)).thenReturn(Optional.empty());
-        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
-        when(valueOperations.setIfAbsent(eq(LOCK_KEY), eq(DONO), any(Duration.class))).thenReturn(false);
-        when(valueOperations.get(LOCK_KEY)).thenReturn(UUID.randomUUID().toString());
-
-        var ex = assertThrows(ResponseStatusException.class, () -> criar(TipoIngresso.INTEIRA));
-
-        assertThat(ex.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
-        assertThat(ex.getReason()).contains("outro usuário");
-        verifyNoInteractions(transactionTemplate, outboxRepository);
-    }
-
-    @Test
-    void criar_mesmaRequisicaoEmAndamento_retorna409EmProcessamento() {
-        // A trava é desta mesma compra, mas ela ainda não foi gravada.
-        when(ingressoRepository.findById(ID_COMPRA)).thenReturn(Optional.empty());
-        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
-        when(valueOperations.setIfAbsent(eq(LOCK_KEY), eq(DONO), any(Duration.class))).thenReturn(false);
-        when(valueOperations.get(LOCK_KEY)).thenReturn(DONO);
-
-        var ex = assertThrows(ResponseStatusException.class, () -> criar(TipoIngresso.INTEIRA));
-
-        assertThat(ex.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
-        assertThat(ex.getReason()).contains("processamento");
-        verifyNoInteractions(transactionTemplate);
-        // A trava pertence à outra requisição em andamento: não pode ser removida.
-        verify(redisTemplate, never()).execute(any(RedisScript.class), any(List.class), any());
-    }
-
-    @Test
-    void criar_idDuplicadoAoGravar_devolveCompraDaOutraRequisicaoELiberaTrava() {
-        Ingresso gravadaPelaOutra = existente(TipoIngresso.INTEIRA);
-        when(ingressoRepository.findById(ID_COMPRA))
-                .thenReturn(Optional.empty())                 // passo 1: ainda não existia
-                .thenReturn(Optional.of(gravadaPelaOutra));   // depois da violação: existe
-        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
-        when(valueOperations.setIfAbsent(LOCK_KEY, DONO, PRAZO)).thenReturn(true);
-        when(transactionTemplate.execute(any())).thenThrow(new DataIntegrityViolationException("id duplicado"));
-
-        assertSame(gravadaPelaOutra, criar(TipoIngresso.INTEIRA));
-
-        verify(redisTemplate).execute(any(RedisScript.class), eq(List.of(LOCK_KEY)), eq(DONO));
-    }
-
-    @Test
-    void criar_erroAoGravarOutbox_liberaTravaERelancaErro() {
+    void criar_falhaAoGravar_liberaAsTravasCriadasPorEstaRequisicao() {
+        when(reservaRepository.findComIngressosById(ID_COMPRA)).thenReturn(Optional.empty());
+        resultadoDaTrava(1L);
         executarTransacoes();
-        when(ingressoRepository.findById(ID_COMPRA)).thenReturn(Optional.empty());
-        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
-        when(valueOperations.setIfAbsent(LOCK_KEY, DONO, PRAZO)).thenReturn(true);
-        when(ingressoRepository.saveAndFlush(any(Ingresso.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        when(outboxRepository.save(any(OutboxEvent.class))).thenThrow(new RuntimeException("Erro no banco de dados"));
+        when(reservaRepository.saveAndFlush(any(Reserva.class))).thenThrow(new IllegalStateException("banco"));
 
-        assertThrows(RuntimeException.class, () -> criar(TipoIngresso.INTEIRA));
+        assertThatThrownBy(this::criar).isInstanceOf(IllegalStateException.class);
 
-        verify(redisTemplate).execute(any(RedisScript.class), eq(List.of(LOCK_KEY)), eq(DONO));
-    }
-
-    // ------------------------------------------------------------------ cancelamento
-
-    private Ingresso pendente() {
-        Ingresso ingresso = new Ingresso();
-        ingresso.setId(ID_COMPRA);
-        ingresso.setIdEvento(1);
-        ingresso.setIdAssento(10);
-        ingresso.setStatus(StatusIngresso.PENDENTE_PAGAMENTO);
-        return ingresso;
+        verify(redisTemplate).execute(any(RedisScript.class),
+                eq(List.of("assento:trava:10", "assento:trava:11")), eq(ID_COMPRA.toString()));
     }
 
     @Test
-    void cancelar_registraChaveCancelaGravaOutboxELiberaTrava() {
+    void criar_outraRequisicaoIgualGravouPrimeiro_devolveAReservaDelaSemTirarAsTravas() {
+        // As travas são da compra que a outra requisição gravou: não podem ser removidas.
+        Reserva gravada = reservaGravada();
+        for (int assento : ASSENTOS) {
+            Ingresso ingresso = new Ingresso();
+            ingresso.setIdAssento(assento);
+            gravada.adicionarIngresso(ingresso);
+        }
+        when(reservaRepository.findComIngressosById(ID_COMPRA)).thenReturn(Optional.empty(), Optional.of(gravada));
+        resultadoDaTrava(1L);
         executarTransacoes();
-        Ingresso ingresso = pendente();
-        when(chaveRepository.existsByIdIngressoAndOperacaoAndChave(ID_COMPRA, OperacaoIdempotente.CANCELAMENTO, CHAVE))
-                .thenReturn(false);
-        when(ingressoRepository.saveAndFlush(ingresso)).thenReturn(ingresso);
+        when(reservaRepository.saveAndFlush(any(Reserva.class)))
+                .thenThrow(new DataIntegrityViolationException("id duplicado"));
 
-        Ingresso cancelado = service.cancelarReserva(ingresso, CHAVE);
+        ReservaService.Criacao criacao = criar();
 
-        assertThat(cancelado.getStatus()).isEqualTo(StatusIngresso.CANCELADO);
-        var chaveCaptor = ArgumentCaptor.forClass(ChaveIdempotencia.class);
-        verify(chaveRepository).save(chaveCaptor.capture());
-        assertThat(chaveCaptor.getValue().getChave()).isEqualTo(CHAVE);
-        assertThat(chaveCaptor.getValue().getIdIngresso()).isEqualTo(ID_COMPRA);
-
-        var outboxCaptor = ArgumentCaptor.forClass(OutboxEvent.class);
-        verify(outboxRepository).save(outboxCaptor.capture());
-        assertThat(outboxCaptor.getValue().getTipoEvento()).isEqualTo("RESERVA_CANCELADA");
-
-        // Trava removida com "comparar e remover", usando o id da compra como dono.
-        verify(redisTemplate).execute(any(RedisScript.class), eq(List.of(LOCK_KEY)), eq(DONO));
+        assertThat(criacao.reserva()).isSameAs(gravada);
+        assertThat(criacao.nova()).isFalse();
+        verify(redisTemplate, never()).execute(any(RedisScript.class), anyList(), anyString());
     }
 
     @Test
-    void cancelar_mesmaChaveRepetida_devolveEstadoAtualSemAplicarDeNovo() {
-        Ingresso jaCancelado = pendente();
-        jaCancelado.setStatus(StatusIngresso.CANCELADO);
-        when(chaveRepository.existsByIdIngressoAndOperacaoAndChave(ID_COMPRA, OperacaoIdempotente.CANCELAMENTO, CHAVE))
-                .thenReturn(true);
+    void criar_mesmaChaveCorpoDiferenteEmParalelo_retorna422ELiberaSoAsTravasDosAssentosQueNaoSaoDaGravada() {
+        // A outra requisição gravou a compra com os assentos 10 e 12; esta pediu 10 e 11 com a mesma chave.
+        Reserva gravada = reservaGravada();
+        for (int assento : List.of(10, 12)) {
+            Ingresso ingresso = new Ingresso();
+            ingresso.setIdAssento(assento);
+            gravada.adicionarIngresso(ingresso);
+        }
+        gravada.setHashRequisicao("outro-corpo");
+        when(reservaRepository.findComIngressosById(ID_COMPRA)).thenReturn(Optional.empty(), Optional.of(gravada));
+        resultadoDaTrava(2L);
+        executarTransacoes();
+        when(reservaRepository.saveAndFlush(any(Reserva.class)))
+                .thenThrow(new DataIntegrityViolationException("id duplicado"));
 
-        assertSame(jaCancelado, service.cancelarReserva(jaCancelado, CHAVE));
+        assertThatThrownBy(this::criar)
+                .isInstanceOfSatisfying(ResponseStatusException.class,
+                        e -> assertThat(e.getStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY));
 
-        verifyNoInteractions(transactionTemplate, outboxRepository, redisTemplate);
+        verify(redisTemplate).execute(any(RedisScript.class), eq(List.of("assento:trava:11")),
+                eq(ID_COMPRA.toString()));
     }
 
     @Test
-    void cancelar_ingressoPago_retorna409() {
-        Ingresso pago = pendente();
-        pago.setStatus(StatusIngresso.PAGO);
-        when(chaveRepository.existsByIdIngressoAndOperacaoAndChave(any(), any(), anyString())).thenReturn(false);
+    void criar_violacaoQueNaoEDoId_liberaAsTravasERelancaOErro() {
+        when(reservaRepository.findComIngressosById(ID_COMPRA)).thenReturn(Optional.empty());
+        resultadoDaTrava(1L);
+        executarTransacoes();
+        when(reservaRepository.saveAndFlush(any(Reserva.class)))
+                .thenThrow(new DataIntegrityViolationException("check"));
 
-        var ex = assertThrows(ResponseStatusException.class, () -> service.cancelarReserva(pago, CHAVE));
+        assertThatThrownBy(this::criar).isInstanceOf(DataIntegrityViolationException.class);
 
-        assertThat(ex.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
-        verifyNoInteractions(transactionTemplate, outboxRepository, redisTemplate);
+        verify(redisTemplate).execute(any(RedisScript.class),
+                eq(List.of("assento:trava:10", "assento:trava:11")), eq(ID_COMPRA.toString()));
+    }
+
+    @Test
+    void criar_travaJaEraDaCompra_segueParaAGravacaoESemLiberarSeFalhar() {
+        // Resultado 2: uma requisição igual pode estar gravando, ou sobrou uma trava de uma falha anterior.
+        // Em vez de recusar, a requisição tenta gravar; se falhar, não remove travas que podem ser da outra.
+        when(reservaRepository.findComIngressosById(ID_COMPRA)).thenReturn(Optional.empty());
+        resultadoDaTrava(2L);
+        executarTransacoes();
+        when(reservaRepository.saveAndFlush(any(Reserva.class))).thenThrow(new IllegalStateException("banco"));
+
+        assertThatThrownBy(this::criar).isInstanceOf(IllegalStateException.class);
+
+        verify(redisTemplate, never()).execute(any(RedisScript.class), anyList(), anyString());
+    }
+
+    @Test
+    void criar_travaQueSobrouDeUmaFalha_naoImpedeACompraDeSerGravada() {
+        when(reservaRepository.findComIngressosById(ID_COMPRA)).thenReturn(Optional.empty());
+        resultadoDaTrava(2L);
+        executarTransacoes();
+        when(reservaRepository.saveAndFlush(any(Reserva.class))).thenAnswer(i -> i.getArgument(0));
+
+        assertThat(criar().nova()).isTrue();
+    }
+
+    // ------------------------------------------------------------------ pagamento e cancelamento
+
+    @Test
+    void pagar_orquestradorAlterouAReservaAoMesmoTempo_reavaliaERegistraOPedido() {
+        // Ex.: assento.reservado chegou entre a leitura e a gravação e a compra foi para AGUARDANDO_PAGAMENTO.
+        Reserva lida = reservaGravada();
+        Reserva atualizada = reservaGravada();
+        atualizada.setEstado(EstadoReserva.AGUARDANDO_PAGAMENTO);
+        executarTransacoes();
+        when(reservaRepository.saveAndFlush(lida)).thenThrow(new ObjectOptimisticLockingFailureException(
+                Reserva.class, ID_COMPRA));
+        when(reservaRepository.findComIngressosById(ID_COMPRA)).thenReturn(Optional.of(atualizada));
+        when(reservaRepository.saveAndFlush(atualizada)).thenReturn(atualizada);
+
+        Reserva resultado = service.solicitarPagamento(lida, "p-1", MetodoPagamento.PIX, SimulacaoPagamento.APROVAR);
+
+        assertThat(resultado).isSameAs(atualizada);
+        assertThat(resultado.getChavePagamento()).isEqualTo("p-1");
+    }
+
+    @Test
+    void pagar_reservaAlteradaEmTodasAsTentativas_retorna409() {
+        Reserva reserva = reservaGravada();
+        executarTransacoes();
+        when(reservaRepository.saveAndFlush(any(Reserva.class))).thenThrow(new ObjectOptimisticLockingFailureException(
+                Reserva.class, ID_COMPRA));
+        when(reservaRepository.findComIngressosById(ID_COMPRA)).thenAnswer(i -> Optional.of(reservaGravada()));
+
+        assertThatThrownBy(() -> service.solicitarPagamento(reserva, "p-1", MetodoPagamento.PIX, null))
+                .isInstanceOfSatisfying(ResponseStatusException.class,
+                        e -> assertThat(e.getStatusCode()).isEqualTo(HttpStatus.CONFLICT));
+        verify(reservaRepository, org.mockito.Mockito.times(3)).saveAndFlush(any(Reserva.class));
+    }
+
+    @Test
+    void pagar_mesmoPedidoGravadoAoMesmoTempo_devolveAReservaAtual() {
+        Reserva reserva = reservaGravada();
+        Reserva atual = reservaGravada();
+        atual.registrarPedidoPagamento("p-1", hashPix(), MetodoPagamento.PIX, SimulacaoPagamento.APROVAR,
+                LocalDateTime.now());
+        executarTransacoes();
+        when(reservaRepository.saveAndFlush(reserva)).thenThrow(new ObjectOptimisticLockingFailureException(
+                Reserva.class, ID_COMPRA));
+        when(reservaRepository.findComIngressosById(ID_COMPRA)).thenReturn(Optional.of(atual));
+
+        Reserva resultado = service.solicitarPagamento(reserva, "p-1", MetodoPagamento.PIX,
+                SimulacaoPagamento.APROVAR);
+
+        assertThat(resultado).isSameAs(atual);
+    }
+
+    @Test
+    void cancelar_alteradaAoMesmoTempoPorOutraOperacao_retorna409() {
+        Reserva reserva = reservaGravada();
+        executarTransacoes();
+        when(reservaRepository.saveAndFlush(reserva)).thenThrow(new ObjectOptimisticLockingFailureException(
+                Reserva.class, ID_COMPRA));
+
+        assertThatThrownBy(() -> service.cancelarReserva(reserva, "c-1"))
+                .isInstanceOfSatisfying(ResponseStatusException.class,
+                        e -> assertThat(e.getStatusCode()).isEqualTo(HttpStatus.CONFLICT));
+    }
+
+    private static String hashPix() {
+        // Mesmo resumo que o serviço calcula para PIX + APROVAR.
+        return org.springframework.test.util.ReflectionTestUtils.invokeMethod(ReservaServiceImpl.class,
+                "hashPagamento", MetodoPagamento.PIX, SimulacaoPagamento.APROVAR);
     }
 }

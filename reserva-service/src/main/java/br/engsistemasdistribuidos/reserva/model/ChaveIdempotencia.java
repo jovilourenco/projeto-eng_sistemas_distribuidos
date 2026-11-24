@@ -12,8 +12,8 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
-// Registro de que uma operação (ex.: cancelamento) já foi aplicada a uma compra com determinada chave.
-// A restrição de unicidade (id_ingresso, operacao, chave) impede aplicar a mesma operação duas vezes.
+// Registro de que uma operação (ex.: cancelamento) já foi aplicada a uma reserva com determinada chave.
+// A restrição de unicidade (id_reserva, operacao, chave) impede aplicar a mesma operação duas vezes.
 @Entity
 @Table(schema = "reserva", name = "chave_idempotencia")
 public class ChaveIdempotencia {
@@ -22,8 +22,8 @@ public class ChaveIdempotencia {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(name = "id_ingresso", nullable = false)
-    private UUID idIngresso;
+    @Column(name = "id_reserva", nullable = false)
+    private UUID idReserva;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "operacao", nullable = false)
@@ -38,8 +38,8 @@ public class ChaveIdempotencia {
     public ChaveIdempotencia() {
     }
 
-    public ChaveIdempotencia(UUID idIngresso, OperacaoIdempotente operacao, String chave) {
-        this.idIngresso = idIngresso;
+    public ChaveIdempotencia(UUID idReserva, OperacaoIdempotente operacao, String chave) {
+        this.idReserva = idReserva;
         this.operacao = operacao;
         this.chave = chave;
     }
@@ -48,8 +48,8 @@ public class ChaveIdempotencia {
         return id;
     }
 
-    public UUID getIdIngresso() {
-        return idIngresso;
+    public UUID getIdReserva() {
+        return idReserva;
     }
 
     public OperacaoIdempotente getOperacao() {
