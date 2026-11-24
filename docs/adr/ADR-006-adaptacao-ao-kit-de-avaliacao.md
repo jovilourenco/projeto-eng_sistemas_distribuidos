@@ -1,4 +1,4 @@
-# ADR-004: Adaptação ao kit de avaliação do professor
+# ADR-006: Adaptação ao kit de avaliação do professor
 
 - **Status:** Aceito
 - **Data:** 2026-11-18
@@ -10,10 +10,10 @@ O professor disponibilizou um kit de testes (carga, pico, corrida, idempotência
 
 ## Decisão
 
-1. A compra aceita de 1 a 4 assentos, tudo ou nada, no formato do contrato: `POST /reservas`, `POST /reservas/{id}/pagamento` e `GET /reservas/{id}`, expostas pelo API Gateway. A disputa por assentos é resolvida de forma síncrona pela trava do Redis (resposta 409), conforme o ADR-003.
+1. A compra aceita de 1 a 4 assentos, tudo ou nada. As rotas do contrato do kit (`POST /reservas`, `POST /reservas/{id}/pagamento`, `GET /reservas/{id}` e `POST /reservas/{id}/cancelamento`) são implementadas pelo `reserva-service`. A disputa por assentos é resolvida de forma síncrona pela trava do Redis (resposta 409), conforme o ADR-003. O API Gateway é o ponto de entrada único.
 2. Os identificadores continuam inteiros. A cópia do kit traduz os códigos de texto (E1, ARENA-A-01-001, U000123) por um mapa gerado na carga dos dados.
 3. Os valores continuam em reais no sistema. A conversão para centavos ocorre na leitura do estado, na cópia do kit.
-4. A autenticação (Keycloak e JWT) permanece ativa no perfil normal e é desativada apenas no perfil de teste. Nesse perfil, o usuário vem no corpo da requisição (`usuario_id`).
+4. A autenticação (Keycloak e JWT) permanece no perfil normal. Enquanto o gateway não existe, os serviços usam autenticação simulada por cabeçalhos (`X-Usuario-Id` e `X-Usuario-Perfil`); no perfil de teste, o kit envia esses cabeçalhos em cada requisição (cópia do kit), sem alterar o código de produção.
 5. As rotas `/_teste` não entram no código de produção: reset, carga e leitura do estado são feitos por SQL e Redis, na cópia do kit.
 
 ## Alternativas consideradas
