@@ -44,6 +44,5 @@ spring:
 reserva:
   prazo-pagamento: 9m
 
-# 8081 já é usada pelo evento-assento-service e pelo Keycloak no docker-compose.
 server:
-  port: 8082
+  port: 8083
