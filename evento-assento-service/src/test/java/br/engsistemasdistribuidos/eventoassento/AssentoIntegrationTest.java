@@ -146,6 +146,59 @@ class AssentoIntegrationTest extends IntegracaoComContainers {
                 .andExpect(status().isConflict());
     }
 
+    @Test
+    void listar_porSetor_devolveListaEnxutaSemOEvento() throws Exception {
+        int idEvento = criarEvento();
+        criarLoteDoTipo(idEvento, 3, "VIP");
+        criarLoteDoTipo(idEvento, 2, "PISTA");
+
+        mockMvc.perform(get("/eventos/{idEvento}/assentos", idEvento).param("setor", "VIP"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(3))
+                .andExpect(jsonPath("$[0].id").exists())
+                .andExpect(jsonPath("$[0].tipoAssento").value("VIP"))
+                .andExpect(jsonPath("$[0].status").value("DISPONIVEL"))
+                .andExpect(jsonPath("$[0].evento").doesNotExist());
+
+        mockMvc.perform(get("/eventos/{idEvento}/assentos", idEvento).param("setor", "PISTA"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2));
+
+        mockMvc.perform(get("/eventos/{idEvento}/assentos", idEvento).param("setor", "INEXISTENTE"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(0));
+    }
+
+    @Test
+    void listar_porSetorEStatus_combinaOsFiltros() throws Exception {
+        int idEvento = criarEvento();
+        List<Integer> vip = criarLoteDoTipo(idEvento, 3, "VIP");
+        criarLoteDoTipo(idEvento, 2, "PISTA");
+        marcarComoReservado(vip.get(0));
+
+        mockMvc.perform(get("/eventos/{idEvento}/assentos", idEvento)
+                .param("setor", "VIP").param("status", "DISPONIVEL"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2));
+
+        mockMvc.perform(get("/eventos/{idEvento}/assentos", idEvento)
+                .param("setor", "PISTA").param("status", "RESERVADO"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(0));
+    }
+
+    private List<Integer> criarLoteDoTipo(int idEvento, int quantidade, String tipo) throws Exception {
+        String json = "{\"quantidade\":" + quantidade + ",\"tipoAssento\":\"" + tipo + "\",\"valor\":100.00}";
+
+        MvcResult result = mockMvc.perform(post("/eventos/{idEvento}/assentos", idEvento)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(json))
+                .andExpect(status().isCreated())
+                .andReturn();
+
+        return JsonPath.read(result.getResponse().getContentAsString(), "$[*].id");
+    }
+
     // ---- Apoio aos testes ----
 
     private int criarEventoPelaApi() throws Exception {

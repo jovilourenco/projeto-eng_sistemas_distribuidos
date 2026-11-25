@@ -5,13 +5,14 @@ import java.util.List;
 import br.engsistemasdistribuidos.eventoassento.dto.request.AssentoLoteRequest;
 import br.engsistemasdistribuidos.eventoassento.dto.request.AssentoRequest;
 import br.engsistemasdistribuidos.eventoassento.dto.response.AssentoResponse;
+import br.engsistemasdistribuidos.eventoassento.dto.response.AssentoResumoResponse;
 import br.engsistemasdistribuidos.eventoassento.model.StatusAssento;
 
 public interface AssentoService {
 
     List<AssentoResponse> criarEmLote(int idEvento, AssentoLoteRequest request);
 
-    List<AssentoResponse> listar(int idEvento, StatusAssento status);
+    List<AssentoResumoResponse> listar(int idEvento, StatusAssento status, String setor);
 
     AssentoResponse buscarPorId(int idEvento, int idAssento);
 

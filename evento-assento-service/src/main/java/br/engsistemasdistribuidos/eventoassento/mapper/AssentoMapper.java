@@ -10,6 +10,7 @@ import org.mapstruct.NullValuePropertyMappingStrategy;
 
 import br.engsistemasdistribuidos.eventoassento.dto.request.AssentoRequest;
 import br.engsistemasdistribuidos.eventoassento.dto.response.AssentoResponse;
+import br.engsistemasdistribuidos.eventoassento.dto.response.AssentoResumoResponse;
 import br.engsistemasdistribuidos.eventoassento.model.Assento;
 
 // O EventoMapper converte o Evento do assento no EventoResponse completo.
@@ -19,6 +20,10 @@ public interface AssentoMapper {
     AssentoResponse toResponse(Assento assento);
 
     List<AssentoResponse> toResponse(List<Assento> assentos);
+
+    AssentoResumoResponse toResumo(Assento assento);
+
+    List<AssentoResumoResponse> toResumo(List<Assento> assentos);
 
     // Atualização parcial: campos null no request não sobrescrevem o assento.
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)

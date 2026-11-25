@@ -34,6 +34,16 @@ public interface AssentoRepository extends JpaSpecificationExecutor<Assento>, Jp
         };
     }
 
+    // Filtro opcional por setor (tipo do assento); sem setor, devolve todos.
+    static Specification<Assento> bySetor(String setor) {
+        return (root, query, builder) -> {
+            if (setor == null || setor.isBlank()) {
+                return builder.conjunction();
+            }
+            return builder.equal(root.get(Assento_.tipoAssento), setor);
+        };
+    }
+
     // ---- Escritas condicionais da SAGA (ADR-003, item 3) ----
     // Cada transição é uma única instrução: o banco verifica o estado esperado e o dono (id_compra)
     // e altera a linha de forma atômica. Retornam o número de linhas alteradas (0 ou 1).

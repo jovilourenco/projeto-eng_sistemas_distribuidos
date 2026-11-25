@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import br.engsistemasdistribuidos.eventoassento.dto.request.AssentoLoteRequest;
 import br.engsistemasdistribuidos.eventoassento.dto.request.AssentoRequest;
 import br.engsistemasdistribuidos.eventoassento.dto.response.AssentoResponse;
+import br.engsistemasdistribuidos.eventoassento.dto.response.AssentoResumoResponse;
 import br.engsistemasdistribuidos.eventoassento.model.StatusAssento;
 import br.engsistemasdistribuidos.eventoassento.service.AssentoService;
 
@@ -39,10 +40,11 @@ public class AssentoController {
     }
 
     @GetMapping
-    public ResponseEntity<List<AssentoResponse>> listar(
+    public ResponseEntity<List<AssentoResumoResponse>> listar(
             @PathVariable int idEvento,
-            @RequestParam(required = false) StatusAssento status) {
-        return ResponseEntity.ok(service.listar(idEvento, status));
+            @RequestParam(required = false) StatusAssento status,
+            @RequestParam(required = false) String setor) {
+        return ResponseEntity.ok(service.listar(idEvento, status, setor));
     }
 
     @GetMapping("/{idAssento}")

@@ -13,6 +13,7 @@ import org.springframework.web.server.ResponseStatusException;
 import br.engsistemasdistribuidos.eventoassento.dto.request.AssentoLoteRequest;
 import br.engsistemasdistribuidos.eventoassento.dto.request.AssentoRequest;
 import br.engsistemasdistribuidos.eventoassento.dto.response.AssentoResponse;
+import br.engsistemasdistribuidos.eventoassento.dto.response.AssentoResumoResponse;
 import br.engsistemasdistribuidos.eventoassento.mapper.AssentoMapper;
 import br.engsistemasdistribuidos.eventoassento.model.Assento;
 import br.engsistemasdistribuidos.eventoassento.model.Evento;
@@ -60,12 +61,13 @@ public class AssentoServiceImpl implements AssentoService {
     }
 
     @Override
-    public List<AssentoResponse> listar(int idEvento, StatusAssento status) {
+    public List<AssentoResumoResponse> listar(int idEvento, StatusAssento status, String setor) {
         recuperarEvento(idEvento);
 
         Specification<Assento> spec = AssentoRepository.byEvento(idEvento)
-                .and(AssentoRepository.byStatus(status));
-        return mapper.toResponse(repository.findAll(spec, Sort.by("id")));
+                .and(AssentoRepository.byStatus(status))
+                .and(AssentoRepository.bySetor(setor));
+        return mapper.toResumo(repository.findAll(spec, Sort.by("id")));
     }
 
     @Override
