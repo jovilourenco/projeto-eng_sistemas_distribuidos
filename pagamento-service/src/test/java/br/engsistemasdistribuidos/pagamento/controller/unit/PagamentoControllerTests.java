@@ -21,6 +21,7 @@ import br.engsistemasdistribuidos.pagamento.dto.response.PagamentoResponse;
 import br.engsistemasdistribuidos.pagamento.mapper.PagamentoMapper;
 import br.engsistemasdistribuidos.pagamento.model.MetodoPagamento;
 import br.engsistemasdistribuidos.pagamento.model.Pagamento;
+import br.engsistemasdistribuidos.pagamento.model.SimulacaoPagamento;
 import br.engsistemasdistribuidos.pagamento.service.PagamentoService;
 
 @ExtendWith(MockitoExtension.class)
@@ -36,45 +37,49 @@ public class PagamentoControllerTests {
     private PagamentoController controller;
 
     @Test
-    void testCriarPagamento() {
+    void testCriarPagamentoAprovadoRetorna200() {
         var id = UUID.randomUUID();
+        var idCompra = UUID.randomUUID();
         var agora = LocalDateTime.now();
-        var chave = "idem-123";
+        var valor = new BigDecimal("120.00");
+        var chave = idCompra + ":1";
 
-        var request = new PagamentoRequest();
-        request.setIdIngresso(10L);
-        request.setValor(new BigDecimal("120.00"));
-        request.setMetodoPagamento(MetodoPagamento.PIX);
+        var request = new PagamentoRequest(idCompra, 1, valor, MetodoPagamento.PIX, SimulacaoPagamento.APROVAR);
+        var pagamento = new Pagamento(id, idCompra, 1, valor, "APROVADO", MetodoPagamento.PIX, SimulacaoPagamento.APROVAR, chave, agora);
+        var responseEsperado = new PagamentoResponse(id, idCompra, 1, valor, "APROVADO", MetodoPagamento.PIX, chave, agora);
 
-        var pagamento = new Pagamento(10L, new BigDecimal("120.00"), "APROVADO", MetodoPagamento.PIX, chave);
-        pagamento.setId(id);
-
-        var responseEsperado = new PagamentoResponse();
-        responseEsperado.setId(id);
-        responseEsperado.setIdIngresso(10L);
-        responseEsperado.setValor(new BigDecimal("120.00"));
-        responseEsperado.setStatus("APROVADO");
-        responseEsperado.setMetodoPagamento(MetodoPagamento.PIX);
-        responseEsperado.setChaveIdempotencia(chave);
-        responseEsperado.setDataCriacao(agora);
-
-        when(pagamentoService.processarPagamento(10L, new BigDecimal("120.00"), MetodoPagamento.PIX, chave))
+        when(pagamentoService.processarPagamento(idCompra, 1, valor, MetodoPagamento.PIX, SimulacaoPagamento.APROVAR))
                 .thenReturn(pagamento);
         when(pagamentoMapper.toResponse(pagamento)).thenReturn(responseEsperado);
 
-        var response = controller.criarPagamento(request, chave);
+        var response = controller.criarPagamento(request);
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().getId()).isEqualTo(id);
-        assertThat(response.getBody().getIdIngresso()).isEqualTo(10L);
-        assertThat(response.getBody().getValor()).isEqualByComparingTo("120.00");
-        assertThat(response.getBody().getStatus()).isEqualTo("APROVADO");
-        assertThat(response.getBody().getMetodoPagamento()).isEqualTo(MetodoPagamento.PIX);
-        assertThat(response.getBody().getChaveIdempotencia()).isEqualTo(chave);
-        assertThat(response.getBody().getDataCriacao()).isEqualTo(agora);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isEqualTo(responseEsperado);
 
-        verify(pagamentoService).processarPagamento(10L, new BigDecimal("120.00"), MetodoPagamento.PIX, chave);
+        verify(pagamentoService).processarPagamento(idCompra, 1, valor, MetodoPagamento.PIX, SimulacaoPagamento.APROVAR);
         verify(pagamentoMapper).toResponse(pagamento);
+    }
+
+    @Test
+    void testCriarPagamentoRecusadoRetorna402() {
+        var id = UUID.randomUUID();
+        var idCompra = UUID.randomUUID();
+        var agora = LocalDateTime.now();
+        var valor = new BigDecimal("120.00");
+        var chave = idCompra + ":1";
+
+        var request = new PagamentoRequest(idCompra, 1, valor, MetodoPagamento.CARTAO_CREDITO, SimulacaoPagamento.RECUSAR);
+        var pagamento = new Pagamento(id, idCompra, 1, valor, "RECUSADO", MetodoPagamento.CARTAO_CREDITO, SimulacaoPagamento.RECUSAR, chave, agora);
+        var responseEsperado = new PagamentoResponse(id, idCompra, 1, valor, "RECUSADO", MetodoPagamento.CARTAO_CREDITO, chave, agora);
+
+        when(pagamentoService.processarPagamento(idCompra, 1, valor, MetodoPagamento.CARTAO_CREDITO, SimulacaoPagamento.RECUSAR))
+                .thenReturn(pagamento);
+        when(pagamentoMapper.toResponse(pagamento)).thenReturn(responseEsperado);
+
+        var response = controller.criarPagamento(request);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.PAYMENT_REQUIRED);
+        assertThat(response.getBody()).isEqualTo(responseEsperado);
     }
 }

@@ -1,9 +1,8 @@
 package br.engsistemasdistribuidos.pagamento.service.unit;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -13,16 +12,17 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import br.engsistemasdistribuidos.pagamento.model.MetodoPagamento;
 import br.engsistemasdistribuidos.pagamento.model.OutboxEvent;
 import br.engsistemasdistribuidos.pagamento.model.Pagamento;
+import br.engsistemasdistribuidos.pagamento.model.SimulacaoPagamento;
 import br.engsistemasdistribuidos.pagamento.repository.OutboxEventRepository;
 import br.engsistemasdistribuidos.pagamento.repository.PagamentoRepository;
 import br.engsistemasdistribuidos.pagamento.service.impl.PagamentoServiceImpl;
@@ -36,64 +36,61 @@ public class PagamentoServiceImplTests {
     @Mock
     private OutboxEventRepository outboxRepository;
 
-    @InjectMocks
     private PagamentoServiceImpl service;
 
-    @Test
-    void testProcessarPagamentoAprovado() {
-        var idIngresso = 10L;
-        var valor = new BigDecimal("150.00");
-        var metodo = MetodoPagamento.PIX;
-        var chave = "idem-key-123";
-        var idGerado = UUID.randomUUID();
-
-        when(pagamentoRepository.findByChaveIdempotencia(chave)).thenReturn(Optional.empty());
-        when(pagamentoRepository.save(any(Pagamento.class))).thenAnswer(invocation -> {
-            Pagamento p = invocation.getArgument(0);
-            p.setId(idGerado);
-            return p;
-        });
-        when(outboxRepository.save(any(OutboxEvent.class))).thenAnswer(invocation -> invocation.getArgument(0));
-
-        var resultado = service.processarPagamento(idIngresso, valor, metodo, chave);
-
-        assertThat(resultado).isNotNull();
-        assertThat(resultado.getId()).isEqualTo(idGerado);
-        assertThat(resultado.getIdIngresso()).isEqualTo(idIngresso);
-        assertThat(resultado.getValor()).isEqualByComparingTo(valor);
-        assertThat(resultado.getMetodoPagamento()).isEqualTo(metodo);
-        assertThat(resultado.getStatus()).isEqualTo("APROVADO");
-        assertThat(resultado.getChaveIdempotencia()).isEqualTo(chave);
-        assertThat(resultado.getDataCriacao()).isNotNull();
-
-        var captor = ArgumentCaptor.forClass(OutboxEvent.class);
-        verify(outboxRepository).save(captor.capture());
-
-        var eventoSalvo = captor.getValue();
-        assertThat(eventoSalvo.getAgregadoTipo()).isEqualTo("PAGAMENTO");
-        assertThat(eventoSalvo.getAgregadoId()).isEqualTo(idGerado.toString());
-        assertThat(eventoSalvo.getTipoEvento()).isEqualTo("PAGAMENTO_APROVADO");
-        assertThat(eventoSalvo.getPayload()).contains("\"status\":\"APROVADO\"");
+    @BeforeEach
+    void setUp() {
+        service = new PagamentoServiceImpl(pagamentoRepository, outboxRepository, 50L);
     }
 
     @Test
-    void testProcessarPagamentoRejeitadoQuandoValorZeroOuNegativo() {
-        var idIngresso = 10L;
-        var valor = BigDecimal.ZERO;
-        var metodo = MetodoPagamento.CARTAO_CREDITO;
-        var chave = "idem-key-456";
-        var idGerado = UUID.randomUUID();
+    void testProcessarPagamentoAprovado() {
+        var idCompra = UUID.randomUUID();
+        var tentativa = 1;
+        var valor = new BigDecimal("150.00");
+        var chave = idCompra + ":" + tentativa;
+        var pagamentoSalvo = new Pagamento(
+                UUID.randomUUID(), idCompra, tentativa, valor, "APROVADO",
+                MetodoPagamento.PIX, SimulacaoPagamento.APROVAR, chave, LocalDateTime.now()
+        );
 
-        when(pagamentoRepository.findByChaveIdempotencia(chave)).thenReturn(Optional.empty());
-        when(pagamentoRepository.save(any(Pagamento.class))).thenAnswer(invocation -> {
-            Pagamento p = invocation.getArgument(0);
-            p.setId(idGerado);
-            return p;
-        });
+        when(pagamentoRepository.inserirSeNaoExistir(
+                any(UUID.class), eq(idCompra), eq(tentativa), eq(valor),
+                eq("APROVADO"), eq("PIX"), eq("APROVAR"), eq(chave), any(LocalDateTime.class)))
+                .thenReturn(1);
+        when(pagamentoRepository.findByChaveIdempotencia(chave)).thenReturn(Optional.of(pagamentoSalvo));
 
-        var resultado = service.processarPagamento(idIngresso, valor, metodo, chave);
+        var resultado = service.processarPagamento(idCompra, tentativa, valor, MetodoPagamento.PIX, SimulacaoPagamento.APROVAR);
 
-        assertThat(resultado.getStatus()).isEqualTo("REJEITADO");
+        assertThat(resultado).isSameAs(pagamentoSalvo);
+        assertThat(resultado.getStatus()).isEqualTo("APROVADO");
+
+        var captor = ArgumentCaptor.forClass(OutboxEvent.class);
+        verify(outboxRepository).save(captor.capture());
+        assertThat(captor.getValue().getTipoEvento()).isEqualTo("PAGAMENTO_APROVADO");
+        assertThat(captor.getValue().getPayload()).contains(idCompra.toString());
+    }
+
+    @Test
+    void testProcessarPagamentoRecusado() {
+        var idCompra = UUID.randomUUID();
+        var tentativa = 1;
+        var valor = new BigDecimal("150.00");
+        var chave = idCompra + ":" + tentativa;
+        var pagamentoSalvo = new Pagamento(
+                UUID.randomUUID(), idCompra, tentativa, valor, "RECUSADO",
+                MetodoPagamento.CARTAO_CREDITO, SimulacaoPagamento.RECUSAR, chave, LocalDateTime.now()
+        );
+
+        when(pagamentoRepository.inserirSeNaoExistir(
+                any(UUID.class), eq(idCompra), eq(tentativa), eq(valor),
+                eq("RECUSADO"), eq("CARTAO_CREDITO"), eq("RECUSAR"), eq(chave), any(LocalDateTime.class)))
+                .thenReturn(1);
+        when(pagamentoRepository.findByChaveIdempotencia(chave)).thenReturn(Optional.of(pagamentoSalvo));
+
+        var resultado = service.processarPagamento(idCompra, tentativa, valor, MetodoPagamento.CARTAO_CREDITO, SimulacaoPagamento.RECUSAR);
+
+        assertThat(resultado.getStatus()).isEqualTo("RECUSADO");
 
         var captor = ArgumentCaptor.forClass(OutboxEvent.class);
         verify(outboxRepository).save(captor.capture());
@@ -101,49 +98,50 @@ public class PagamentoServiceImplTests {
     }
 
     @Test
-    void testRetornarPagamentoExistenteQuandoChaveIdempotenciaJaProcessada() {
-        var chave = "idem-key-duplicada";
-        var pagamentoExistente = new Pagamento();
-        pagamentoExistente.setId(UUID.randomUUID());
-        pagamentoExistente.setIdIngresso(10L);
-        pagamentoExistente.setValor(new BigDecimal("100.00"));
-        pagamentoExistente.setStatus("APROVADO");
-        pagamentoExistente.setMetodoPagamento(MetodoPagamento.BOLETO);
-        pagamentoExistente.setChaveIdempotencia(chave);
-        pagamentoExistente.setDataCriacao(LocalDateTime.now());
+    void testProcessarPagamentoComAtrasoEAprovado() {
+        var idCompra = UUID.randomUUID();
+        var tentativa = 1;
+        var valor = new BigDecimal("200.00");
+        var chave = idCompra + ":" + tentativa;
+        var pagamentoSalvo = new Pagamento(
+                UUID.randomUUID(), idCompra, tentativa, valor, "APROVADO",
+                MetodoPagamento.PIX, SimulacaoPagamento.ATRASAR, chave, LocalDateTime.now()
+        );
 
+        when(pagamentoRepository.inserirSeNaoExistir(
+                any(UUID.class), eq(idCompra), eq(tentativa), eq(valor),
+                eq("APROVADO"), eq("PIX"), eq("ATRASAR"), eq(chave), any(LocalDateTime.class)))
+                .thenReturn(1);
+        when(pagamentoRepository.findByChaveIdempotencia(chave)).thenReturn(Optional.of(pagamentoSalvo));
+
+        long inicio = System.currentTimeMillis();
+        var resultado = service.processarPagamento(idCompra, tentativa, valor, MetodoPagamento.PIX, SimulacaoPagamento.ATRASAR);
+        long duracao = System.currentTimeMillis() - inicio;
+
+        assertThat(resultado.getStatus()).isEqualTo("APROVADO");
+        assertThat(duracao).isGreaterThanOrEqualTo(40L);
+    }
+
+    @Test
+    void testRetornarPagamentoExistenteSemDuplicarOutboxQuandoConflitoDeChave() {
+        var idCompra = UUID.randomUUID();
+        var tentativa = 2;
+        var valor = new BigDecimal("100.00");
+        var chave = idCompra + ":" + tentativa;
+        var pagamentoExistente = new Pagamento(
+                UUID.randomUUID(), idCompra, tentativa, valor, "APROVADO",
+                MetodoPagamento.BOLETO, SimulacaoPagamento.APROVAR, chave, LocalDateTime.now()
+        );
+
+        when(pagamentoRepository.inserirSeNaoExistir(
+                any(UUID.class), eq(idCompra), eq(tentativa), eq(valor),
+                eq("APROVADO"), eq("BOLETO"), eq("APROVAR"), eq(chave), any(LocalDateTime.class)))
+                .thenReturn(0);
         when(pagamentoRepository.findByChaveIdempotencia(chave)).thenReturn(Optional.of(pagamentoExistente));
 
-        var resultado = service.processarPagamento(10L, new BigDecimal("100.00"), MetodoPagamento.BOLETO, chave);
+        var resultado = service.processarPagamento(idCompra, tentativa, valor, MetodoPagamento.BOLETO, SimulacaoPagamento.APROVAR);
 
         assertThat(resultado).isSameAs(pagamentoExistente);
-        verify(pagamentoRepository, never()).save(any());
         verifyNoInteractions(outboxRepository);
-    }
-
-    @Test
-    void testLancarExcecaoQuandoServicoIndisponivelSimulado() {
-        var chave = "idem-key-erro";
-
-        when(pagamentoRepository.findByChaveIdempotencia(chave)).thenReturn(Optional.empty());
-
-        assertThrows(RuntimeException.class,
-                () -> service.processarPagamento(666L, new BigDecimal("100.00"), MetodoPagamento.PIX, chave));
-
-        verify(pagamentoRepository, never()).save(any());
-        verifyNoInteractions(outboxRepository);
-    }
-
-    @Test
-    void testPagamentoFallback() {
-        var erro = new RuntimeException("Falha externa");
-
-        var resultado = service.pagamentoFallback(15L, new BigDecimal("80.00"), MetodoPagamento.PIX, "idem-fallback",
-                erro);
-
-        assertThat(resultado).isNotNull();
-        assertThat(resultado.getIdIngresso()).isEqualTo(15L);
-        assertThat(resultado.getStatus()).isEqualTo("SERVICO_INDISPONIVEL_FALLBACK");
-        assertThat(resultado.getMetodoPagamento()).isEqualTo(MetodoPagamento.PIX);
     }
 }

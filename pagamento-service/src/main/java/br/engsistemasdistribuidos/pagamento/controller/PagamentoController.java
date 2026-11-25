@@ -8,7 +8,10 @@ import br.engsistemasdistribuidos.pagamento.service.PagamentoService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/pagamentos")
@@ -23,19 +26,20 @@ public class PagamentoController {
     }
 
     @PostMapping
-    public ResponseEntity<PagamentoResponse> criarPagamento(
-            @Valid @RequestBody PagamentoRequest request,
-            @RequestHeader("Idempotency-Key") String chaveIdempotencia) {
-
+    public ResponseEntity<PagamentoResponse> criarPagamento(@Valid @RequestBody PagamentoRequest request) {
         Pagamento pagamento = pagamentoService.processarPagamento(
-                request.getIdIngresso(),
-                request.getValor(),
-                request.getMetodoPagamento(),
-                chaveIdempotencia
+                request.idCompra(),
+                request.tentativa(),
+                request.valor(),
+                request.metodo(),
+                request.simulacao()
         );
 
         PagamentoResponse response = pagamentoMapper.toResponse(pagamento);
+        HttpStatus statusHttp = "APROVADO".equals(pagamento.getStatus())
+                ? HttpStatus.OK
+                : HttpStatus.PAYMENT_REQUIRED;
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        return ResponseEntity.status(statusHttp).body(response);
     }
 }

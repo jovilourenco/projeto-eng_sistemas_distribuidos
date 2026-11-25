@@ -3,66 +3,92 @@ package br.engsistemasdistribuidos.pagamento.service.impl;
 import br.engsistemasdistribuidos.pagamento.model.MetodoPagamento;
 import br.engsistemasdistribuidos.pagamento.model.OutboxEvent;
 import br.engsistemasdistribuidos.pagamento.model.Pagamento;
+import br.engsistemasdistribuidos.pagamento.model.SimulacaoPagamento;
 import br.engsistemasdistribuidos.pagamento.repository.OutboxEventRepository;
 import br.engsistemasdistribuidos.pagamento.repository.PagamentoRepository;
 import br.engsistemasdistribuidos.pagamento.service.PagamentoService;
-import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.util.Optional;
+import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Service
 public class PagamentoServiceImpl implements PagamentoService {
 
     private final PagamentoRepository pagamentoRepository;
     private final OutboxEventRepository outboxRepository;
+    private final long atrasoMs;
 
-    public PagamentoServiceImpl(PagamentoRepository pagamentoRepository, OutboxEventRepository outboxRepository) {
+    public PagamentoServiceImpl(
+            PagamentoRepository pagamentoRepository,
+            OutboxEventRepository outboxRepository,
+            @Value("${pagamento.simulacao.atraso-ms:3000}") long atrasoMs) {
         this.pagamentoRepository = pagamentoRepository;
         this.outboxRepository = outboxRepository;
+        this.atrasoMs = atrasoMs;
     }
 
     @Override
     @Transactional
-    @CircuitBreaker(name = "pagamentoService", fallbackMethod = "pagamentoFallback")
-    public Pagamento processarPagamento(Long idIngresso, BigDecimal valor, MetodoPagamento metodoPagamento,
-            String chaveIdempotencia) {
+    public Pagamento processarPagamento(
+            UUID idCompra,
+            Integer tentativa,
+            BigDecimal valor,
+            MetodoPagamento metodo,
+            SimulacaoPagamento simulacao) {
 
-        Optional<Pagamento> pagamentoExistente = pagamentoRepository.findByChaveIdempotencia(chaveIdempotencia);
-        if (pagamentoExistente.isPresent()) {
-            return pagamentoExistente.get();
+        if (simulacao == SimulacaoPagamento.ATRASAR && atrasoMs > 0) {
+            simularAtraso(atrasoMs);
         }
 
-        if (idIngresso != null && idIngresso == 666L) {
-            throw new RuntimeException("Serviço de pagamento externo indisponível.");
+        String chaveIdempotencia = idCompra + ":" + tentativa;
+        String status = (simulacao == SimulacaoPagamento.RECUSAR) ? "RECUSADO" : "APROVADO";
+        UUID novoId = UUID.randomUUID();
+        LocalDateTime agora = LocalDateTime.now();
+
+        int inseridos = pagamentoRepository.inserirSeNaoExistir(
+                novoId,
+                idCompra,
+                tentativa,
+                valor,
+                status,
+                metodo.name(),
+                simulacao.name(),
+                chaveIdempotencia,
+                agora
+        );
+
+        if (inseridos == 1) {
+            String tipoEvento = "APROVADO".equals(status) ? "PAGAMENTO_APROVADO" : "PAGAMENTO_FALHOU";
+            String payload = String.format(
+                    "{\"idPagamento\":\"%s\",\"idCompra\":\"%s\",\"tentativa\":%d,\"status\":\"%s\"}",
+                    novoId, idCompra, tentativa, status
+            );
+
+            OutboxEvent outboxEvent = new OutboxEvent(
+                    "PAGAMENTO",
+                    novoId.toString(),
+                    tipoEvento,
+                    payload
+            );
+            outboxRepository.save(outboxEvent);
         }
 
-        // Simulação: valores negativos ou zerados são rejeitados para permitir testar a
-        // compensação da SAGA
-        String statusSimulado = (valor != null && valor.compareTo(BigDecimal.ZERO) > 0) ? "APROVADO" : "REJEITADO";
-        String tipoEvento = "APROVADO".equals(statusSimulado) ? "PAGAMENTO_APROVADO" : "PAGAMENTO_FALHOU";
-
-        Pagamento novoPagamento = new Pagamento(idIngresso, valor, statusSimulado, metodoPagamento, chaveIdempotencia);
-        Pagamento pagamentoSalvo = pagamentoRepository.save(novoPagamento);
-
-        String payload = String.format(
-                "{\"idPagamento\":\"%s\",\"idIngresso\":%d,\"status\":\"%s\"}",
-                pagamentoSalvo.getId(), idIngresso, statusSimulado);
-
-        OutboxEvent outboxEvent = new OutboxEvent(
-                "PAGAMENTO",
-                pagamentoSalvo.getId().toString(),
-                tipoEvento,
-                payload);
-        outboxRepository.save(outboxEvent);
-
-        return pagamentoSalvo;
+        return pagamentoRepository.findByChaveIdempotencia(chaveIdempotencia)
+                .orElseThrow(() -> new IllegalStateException(
+                        "Pagamento não encontrado após inserção idempotente: " + chaveIdempotencia
+                ));
     }
 
-    public Pagamento pagamentoFallback(Long idIngresso, BigDecimal valor, MetodoPagamento metodoPagamento,
-            String chaveIdempotencia, Throwable t) {
-        return new Pagamento(idIngresso, valor, "SERVICO_INDISPONIVEL_FALLBACK", metodoPagamento, chaveIdempotencia);
+    private void simularAtraso(long milissegundos) {
+        try {
+            Thread.sleep(milissegundos);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("Execução interrompida durante simulação de atraso", e);
+        }
     }
 }

@@ -23,17 +23,7 @@ spring:
 server:
   port: 8082
 
-# Configurações do Resilience4j Circuit Breaker
-resilience4j:
-  circuitbreaker:
-    instances:
-      pagamentoService:
-        registerHealthIndicator: true
-        slidingWindowType: COUNT_BASED
-        slidingWindowSize: 10 # Analisa as últimas 10 requisições
-        failureRateThreshold: 50.0 # Se 50% falharem, abre o circuito
-        slowCallRateThreshold: 50.0
-        slowCallDurationThreshold: 3s # Considera lenta se demorar mais de 3 segundos
-        waitDurationInOpenState: 10s # Fica aberto por 10 segundos antes de testar de novo
-        permittedNumberOfCallsInHalfOpenState: 3
-        automaticTransitionFromOpenToHalfOpenEnabled: true
+# Atraso simulado para a resposta do serviço de pagamento, em milissegundos.
+pagamento:
+  simulacao:
+    atraso-ms: 3000

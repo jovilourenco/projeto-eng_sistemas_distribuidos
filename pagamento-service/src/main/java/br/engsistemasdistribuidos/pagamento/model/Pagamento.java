@@ -10,39 +10,49 @@ import java.util.UUID;
 public class Pagamento {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(name = "id_ingresso", nullable = false)
-    private Long idIngresso;
+    @Column(name = "id_compra", nullable = false)
+    private UUID idCompra;
+
+    @Column(nullable = false)
+    private Integer tentativa;
 
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal valor;
 
     @Column(nullable = false, length = 50)
-    private String status; // "PENDENTE", "APROVADO", "REJEITADO"
+    private String status;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "metodo_pagamento", nullable = false, length = 50)
     private MetodoPagamento metodoPagamento;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 50)
+    private SimulacaoPagamento simulacao;
+
     @Column(name = "chave_idempotencia", nullable = false, unique = true, length = 255)
     private String chaveIdempotencia;
 
     @Column(name = "data_criacao", nullable = false)
-    private LocalDateTime dataCriacao = LocalDateTime.now();
+    private LocalDateTime dataCriacao;
 
     public Pagamento() {
     }
 
-    public Pagamento(Long idIngresso, BigDecimal valor, String status, MetodoPagamento metodoPagamento,
-            String chaveIdempotencia) {
-        this.idIngresso = idIngresso;
+    public Pagamento(UUID id, UUID idCompra, Integer tentativa, BigDecimal valor, String status,
+            MetodoPagamento metodoPagamento, SimulacaoPagamento simulacao, String chaveIdempotencia,
+            LocalDateTime dataCriacao) {
+        this.id = id;
+        this.idCompra = idCompra;
+        this.tentativa = tentativa;
         this.valor = valor;
         this.status = status;
         this.metodoPagamento = metodoPagamento;
+        this.simulacao = simulacao;
         this.chaveIdempotencia = chaveIdempotencia;
-        this.dataCriacao = LocalDateTime.now();
+        this.dataCriacao = dataCriacao;
     }
 
     public UUID getId() {
@@ -53,12 +63,20 @@ public class Pagamento {
         this.id = id;
     }
 
-    public Long getIdIngresso() {
-        return idIngresso;
+    public UUID getIdCompra() {
+        return idCompra;
     }
 
-    public void setIdIngresso(Long idIngresso) {
-        this.idIngresso = idIngresso;
+    public void setIdCompra(UUID idCompra) {
+        this.idCompra = idCompra;
+    }
+
+    public Integer getTentativa() {
+        return tentativa;
+    }
+
+    public void setTentativa(Integer tentativa) {
+        this.tentativa = tentativa;
     }
 
     public BigDecimal getValor() {
@@ -83,6 +101,14 @@ public class Pagamento {
 
     public void setMetodoPagamento(MetodoPagamento metodoPagamento) {
         this.metodoPagamento = metodoPagamento;
+    }
+
+    public SimulacaoPagamento getSimulacao() {
+        return simulacao;
+    }
+
+    public void setSimulacao(SimulacaoPagamento simulacao) {
+        this.simulacao = simulacao;
     }
 
     public String getChaveIdempotencia() {
