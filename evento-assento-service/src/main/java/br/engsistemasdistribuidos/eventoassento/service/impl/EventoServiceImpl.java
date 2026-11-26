@@ -2,6 +2,7 @@ package br.engsistemasdistribuidos.eventoassento.service.impl;
 
 import java.util.List;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -12,6 +13,7 @@ import br.engsistemasdistribuidos.eventoassento.dto.response.EventoResponse;
 import br.engsistemasdistribuidos.eventoassento.mapper.EventoMapper;
 import br.engsistemasdistribuidos.eventoassento.model.Evento;
 import br.engsistemasdistribuidos.eventoassento.model.TipoEvento;
+import br.engsistemasdistribuidos.eventoassento.repository.AssentoRepository;
 import br.engsistemasdistribuidos.eventoassento.repository.EventoRepository;
 import br.engsistemasdistribuidos.eventoassento.repository.TipoEventoRepository;
 import br.engsistemasdistribuidos.eventoassento.service.EventoService;
@@ -24,13 +26,16 @@ public class EventoServiceImpl implements EventoService {
     private final EventoRepository repository;
     private final EventoMapper mapper;
     private final TipoEventoRepository tipoEventoRepository;
+    private final AssentoRepository assentoRepository;
 
     public EventoServiceImpl(EventoRepository repository, 
                         EventoMapper mapper, 
-                        TipoEventoRepository tipoEventoRepository) {
+                        TipoEventoRepository tipoEventoRepository,
+                        AssentoRepository assentoRepository) {
         this.repository = repository;
         this.mapper = mapper;
-        this.tipoEventoRepository = tipoEventoRepository;   
+        this.tipoEventoRepository = tipoEventoRepository;
+        this.assentoRepository = assentoRepository;   
     }
 
     @Override
@@ -78,8 +83,19 @@ public class EventoServiceImpl implements EventoService {
 
     @Override
     public void excluir(int idEvento) {
-        Evento evento = recuperarEvento(idEvento);
-        repository.delete(evento);
+        recuperarEvento(idEvento); // 404 se não existir
+
+        // ADR-003, item 6: remove só os assentos DISPONIVEL e, na mesma transação, o evento. Se restar algum
+        // assento reservado ou vendido, a chave estrangeira impede a exclusão; a transação é desfeita (os
+        // assentos disponíveis voltam) e o gestor recebe 409.
+        assentoRepository.excluirDisponiveisDoEvento(idEvento);
+        try {
+            repository.deleteById(idEvento);
+            repository.flush();
+        } catch (DataIntegrityViolationException e) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "O evento tem assentos reservados ou vendidos e não pode ser excluído.");
+        }
     }
 
     private Evento recuperarEvento(int idEvento) {

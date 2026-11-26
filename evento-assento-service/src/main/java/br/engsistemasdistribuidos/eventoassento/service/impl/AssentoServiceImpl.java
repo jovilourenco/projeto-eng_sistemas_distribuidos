@@ -77,25 +77,30 @@ public class AssentoServiceImpl implements AssentoService {
     public AssentoResponse atualizar(int idEvento, int idAssento, AssentoRequest request) {
         Assento assento = recuperarAssento(idEvento, idAssento);
 
-        if (assento.getStatus() != StatusAssento.DISPONIVEL) {
+        validarAtualizacao(request);
+
+        // Escrita condicional (ADR-003, item 6): só altera se o assento ainda estiver DISPONIVEL.
+        // Campos não informados mantêm o valor atual.
+        String tipo = request.getTipoAssento() != null ? request.getTipoAssento().trim() : assento.getTipoAssento();
+        BigDecimal valor = request.getValor() != null ? request.getValor() : assento.getValor();
+        boolean ativo = request.getAtivo() != null ? request.getAtivo() : assento.isAtivo();
+
+        if (repository.atualizarSeDisponivel(idAssento, idEvento, tipo, valor, ativo) == 0) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
                     "Assentos reservados ou vendidos não podem ser alterados.");
         }
-        validarAtualizacao(request);
-
-        mapper.updateEntity(request, assento);
-        return mapper.toResponse(repository.save(assento));
+        return mapper.toResponse(recuperarAssento(idEvento, idAssento));
     }
 
     @Override
     public void excluir(int idEvento, int idAssento) {
-        Assento assento = recuperarAssento(idEvento, idAssento);
+        recuperarAssento(idEvento, idAssento); // 404 se o assento não existir neste evento
 
-        if (assento.getStatus() != StatusAssento.DISPONIVEL) {
+        // Escrita condicional (ADR-003, item 6): só exclui se o assento ainda estiver DISPONIVEL.
+        if (repository.excluirSeDisponivel(idAssento, idEvento) == 0) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
                     "Assentos reservados ou vendidos não podem ser excluídos.");
         }
-        repository.delete(assento);
     }
 
     private Evento recuperarEvento(int idEvento) {
