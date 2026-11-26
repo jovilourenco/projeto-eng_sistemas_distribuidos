@@ -1,5 +1,6 @@
 package br.engsistemasdistribuidos.eventoassento.repository;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 import org.springframework.data.jpa.domain.Specification;
@@ -71,4 +72,38 @@ public interface AssentoRepository extends JpaSpecificationExecutor<Assento>, Jp
                AND status = 'RESERVADO'
             """, nativeQuery = true)
     int liberar(@Param("idAssento") int idAssento, @Param("idCompra") UUID idCompra);
+
+    // ---- Escritas condicionais do gestor (ADR-003, item 6) ----
+    // Só alteram o assento enquanto ele estiver DISPONIVEL; retornam o número de linhas alteradas (0 ou 1).
+    // Zero linhas quer dizer que uma reserva entrou antes: o gestor recebe 409.
+
+    @Modifying(clearAutomatically = true)
+    @Query(value = """
+            UPDATE evento_assento.assento
+               SET tipo_assento = :tipoAssento, valor = :valor, ativo = :ativo
+             WHERE id_assento = :idAssento
+               AND id_evento = :idEvento
+               AND status = 'DISPONIVEL'
+            """, nativeQuery = true)
+    int atualizarSeDisponivel(@Param("idAssento") int idAssento, @Param("idEvento") int idEvento,
+            @Param("tipoAssento") String tipoAssento, @Param("valor") BigDecimal valor,
+            @Param("ativo") boolean ativo);
+
+    @Modifying(clearAutomatically = true)
+    @Query(value = """
+            DELETE FROM evento_assento.assento
+             WHERE id_assento = :idAssento
+               AND id_evento = :idEvento
+               AND status = 'DISPONIVEL'
+            """, nativeQuery = true)
+    int excluirSeDisponivel(@Param("idAssento") int idAssento, @Param("idEvento") int idEvento);
+
+    // Usada na exclusão do evento: os assentos reservados ou vendidos permanecem e fazem a chave estrangeira bloquear.
+    @Modifying(clearAutomatically = true)
+    @Query(value = """
+            DELETE FROM evento_assento.assento
+             WHERE id_evento = :idEvento
+               AND status = 'DISPONIVEL'
+            """, nativeQuery = true)
+    int excluirDisponiveisDoEvento(@Param("idEvento") int idEvento);
 }
